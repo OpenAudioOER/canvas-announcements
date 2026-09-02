@@ -34,15 +34,17 @@
               <i class="fa-brands fa-github"></i> OpenAudioOER/canvas-announcements
             </span>
           </div>
-          <p class="text-xs text-slate-400">Generates 100% Canvas RCE Sanitizer-Compliant Inline HTML</p>
+          <div class="flex items-center gap-2 text-xs text-slate-400">
+            <span>Generates 100% Canvas RCE Sanitizer-Compliant Inline HTML</span>
+            <span class="text-emerald-400 font-semibold flex items-center gap-1 text-[11px]">
+              <i class="fa-solid fa-cloud-arrow-up"></i> Auto-Saved to Browser
+            </span>
+          </div>
         </div>
       </div>
       <div class="flex items-center space-x-2">
-        <button @click="loadBenchmarkPreset" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-2 rounded-md transition border border-slate-700 flex items-center gap-1.5">
-          <i class="fa-solid fa-rotate-left"></i> Reset Preset
-        </button>
-        <button @click="saveDefaults" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-2 rounded-md transition border border-slate-700 flex items-center gap-1.5">
-          <i class="fa-solid fa-floppy-disk"></i> Save Profile
+        <button @click="loadBenchmarkPreset" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-2 rounded-md transition border border-slate-700 flex items-center gap-1.5" title="Reset all sections to benchmark default sample">
+          <i class="fa-solid fa-rotate-left"></i> Reset to Sample
         </button>
         <button @click="exportHTMLFile" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-2 rounded-md transition border border-slate-700 flex items-center gap-1.5">
           <i class="fa-solid fa-file-arrow-down"></i> Export .html
@@ -398,7 +400,7 @@
   </div>
 
   <script>
-    const { createApp, ref, computed, onMounted } = Vue;
+    const { createApp, ref, computed, watch, onMounted } = Vue;
 
     createApp({
       setup() {
@@ -435,6 +437,8 @@
           signatureUrl: sources.github_pages + 'Signature.png'
         });
 
+        const sections = ref([]);
+
         const updateAssetBaseUrl = () => {
           const base = getBaseUrl();
           banner.value.url = base + activeBannerFile.value;
@@ -463,8 +467,6 @@
           purple: { name: 'Purple Accent', border: '#7b1fa2', bg: '#faf5ff', title: '#4a148c', buttonBg: '#7b1fa2' },
           slate: { name: 'Neutral Slate', border: '#64748b', bg: '#f8fafc', title: '#1e293b', buttonBg: '#475569' }
         };
-
-        const sections = ref([]);
 
         // BENCHMARK PRESET LOADER
         const loadBenchmarkPreset = () => {
@@ -510,14 +512,14 @@
               boxStyle: 'bordered',
               groups: [
                 {
-                  id: 'g_' + Date.now() + '_1',
+                  id: 'g_1',
                   title: 'Due Thursday, September 3rd:',
                   items: [
                     { icon: '📝', text: 'Video Discussion #1', url: 'https://ilearn.instructure.com/courses/379774/assignments/10276499', note: '' }
                   ]
                 },
                 {
-                  id: 'g_' + Date.now() + '_2',
+                  id: 'g_2',
                   title: 'Due Sunday, September 6th:',
                   items: [
                     { icon: '🧠', text: 'Interactive Lecture – Introduction to American Politics', url: '#', note: '' },
@@ -714,14 +716,21 @@
           return html;
         });
 
-        const saveDefaults = () => {
-          localStorage.setItem('canvas_announcement_profile', JSON.stringify({
-            profile: profile.value,
-            banner: banner.value,
-            assetSource: assetSource.value
-          }));
-          alert('Profile defaults saved to browser storage!');
-        };
+        // REAL-TIME LOCALSTORAGE AUTO-SAVE WATCHER
+        watch([sections, banner, profile, assetSource, activeBannerFile], () => {
+          try {
+            const state = {
+              sections: sections.value,
+              banner: banner.value,
+              profile: profile.value,
+              assetSource: assetSource.value,
+              activeBannerFile: activeBannerFile.value
+            };
+            localStorage.setItem('canvas_announcement_state', JSON.stringify(state));
+          } catch(e) {
+            console.error('Failed to auto-save to localStorage:', e);
+          }
+        }, { deep: true });
 
         const copyCanvasHTML = () => {
           navigator.clipboard.writeText(generatedHTML.value).then(() => {
@@ -739,15 +748,26 @@
         };
 
         onMounted(() => {
-          const saved = localStorage.getItem('canvas_announcement_profile');
-          if (saved) {
+          // Restore full auto-saved state from localStorage if available
+          const savedState = localStorage.getItem('canvas_announcement_state');
+          if (savedState) {
             try {
-              const parsed = JSON.parse(saved);
-              if (parsed.profile) profile.value = parsed.profile;
+              const parsed = JSON.parse(savedState);
+              if (parsed.sections && Array.isArray(parsed.sections) && parsed.sections.length > 0) {
+                sections.value = parsed.sections;
+              } else {
+                loadBenchmarkPreset();
+              }
               if (parsed.banner) banner.value = parsed.banner;
+              if (parsed.profile) profile.value = parsed.profile;
               if (parsed.assetSource) assetSource.value = parsed.assetSource;
-            } catch(e){}
+              if (parsed.activeBannerFile) activeBannerFile.value = parsed.activeBannerFile;
+              return;
+            } catch(e) {
+              console.error('Error loading saved state:', e);
+            }
           }
+          // Fallback to initial benchmark sample if no saved state
           loadBenchmarkPreset();
         });
 
@@ -772,7 +792,6 @@
           parseVideoEmbed,
           getSectionTypeName,
           generatedHTML,
-          saveDefaults,
           copyCanvasHTML,
           exportHTMLFile
         };
