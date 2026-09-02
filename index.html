@@ -60,6 +60,26 @@
       <!-- LEFT COLUMN: CONTROLS & FORM EDITORS -->
       <aside class="w-1/2 flex flex-col border-r border-slate-200 bg-white overflow-y-auto p-6 space-y-6">
 
+        <!-- ASSET DOMAIN / SOURCE SELECTOR -->
+        <section class="bg-slate-900 text-white rounded-xl p-4 space-y-3">
+          <div class="flex items-center justify-between">
+            <h2 class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+              <i class="fa-solid fa-globe text-blue-400"></i> Image Asset Hosting Source
+            </h2>
+            <span class="text-[10px] bg-blue-950 text-blue-300 px-2 py-0.5 rounded border border-blue-800">Public vs Relative</span>
+          </div>
+
+          <div class="space-y-2">
+            <label class="block text-[11px] text-slate-400">Where are your banner images hosted for Canvas?</label>
+            <select v-model="assetSource" @change="updateAssetBaseUrl" class="w-full text-xs p-2 bg-slate-800 border border-slate-700 rounded text-slate-100 font-semibold focus:outline-none">
+              <option value="github_pages">GitHub Pages (https://openaudiooer.github.io/canvas-announcements/banners/)</option>
+              <option value="github_raw">GitHub Raw (https://raw.githubusercontent.com/OpenAudioOER/...)</option>
+              <option value="relative">Local Relative Folder (banners/)</option>
+            </select>
+            <p class="text-[10px] text-slate-400">Note: If your GitHub repository is <strong>Private</strong>, standard raw URLs return 404 in Canvas. Enable GitHub Pages or make repo Public for external image loading.</p>
+          </div>
+        </section>
+
         <!-- QUICK BANNER SELECTION SECTION -->
         <section class="bg-blue-50/70 border border-blue-200 rounded-xl p-4 space-y-3">
           <div class="flex items-center justify-between">
@@ -73,9 +93,9 @@
           <div class="grid grid-cols-2 gap-2.5">
             <button v-for="b in presetBanners" :key="b.file" 
               @click="setBannerPreset(b)"
-              :class="banner.url === b.url ? 'ring-2 ring-blue-600 bg-white shadow-md border-blue-400' : 'bg-white/80 hover:bg-white border-slate-200 hover:border-blue-300'"
+              :class="activeBannerFile === b.file ? 'ring-2 ring-blue-600 bg-white shadow-md border-blue-400' : 'bg-white/80 hover:bg-white border-slate-200 hover:border-blue-300'"
               class="p-2.5 rounded-lg border text-left transition flex items-center gap-3 group">
-              <img :src="b.url" :alt="b.name" class="w-16 h-10 object-cover rounded border border-slate-200 shrink-0" />
+              <img :src="'banners/' + b.file" :alt="b.name" class="w-16 h-10 object-cover rounded border border-slate-200 shrink-0" @error="handleImgError" />
               <div class="overflow-hidden">
                 <div class="text-xs font-bold text-slate-800 group-hover:text-blue-600 truncate">{{ b.icon }} {{ b.name }}</div>
                 <div class="text-[10px] text-slate-400 font-mono truncate">{{ b.file }}</div>
@@ -122,14 +142,14 @@
             <!-- HARDCODED GITHUB SIGNATURE INFO -->
             <div class="col-span-2 bg-white p-3 rounded-lg border border-slate-200 flex items-center justify-between">
               <div class="flex items-center space-x-3">
-                <img :src="profile.signatureUrl" alt="Signature Preview" class="h-10 border border-slate-200 rounded px-1 bg-slate-50" />
+                <img src="banners/Signature.png" alt="Signature Preview" class="h-10 border border-slate-200 rounded px-1 bg-slate-50" />
                 <div>
-                  <div class="text-xs font-bold text-slate-700">Signature Image Locked to GitHub Path</div>
-                  <div class="text-[10px] text-slate-400 font-mono">OpenAudioOER/canvas-announcements/main/banners/Signature.png</div>
+                  <div class="text-xs font-bold text-slate-700">Signature Image Asset</div>
+                  <div class="text-[10px] text-slate-400 font-mono">banners/Signature.png</div>
                 </div>
               </div>
               <span class="text-xs text-emerald-600 font-bold flex items-center gap-1">
-                <i class="fa-solid fa-circle-check"></i> Linked
+                <i class="fa-solid fa-circle-check"></i> Connected
               </span>
             </div>
           </div>
@@ -373,19 +393,27 @@
       setup() {
         const viewMode = ref('preview');
         const copied = ref(false);
+        const assetSource = ref('github_pages');
 
-        // HARDCODED GITHUB BANNERS & SIGNATURE PATHS
-        const GITHUB_RAW_BASE = 'https://raw.githubusercontent.com/OpenAudioOER/canvas-announcements/main/banners/';
-        
+        const sources = {
+          github_pages: 'https://openaudiooer.github.io/canvas-announcements/banners/',
+          github_raw: 'https://raw.githubusercontent.com/OpenAudioOER/canvas-announcements/main/banners/',
+          relative: 'banners/'
+        };
+
         const presetBanners = [
-          { name: 'Welcome Banner', icon: '👋', file: 'Welcome.png', url: GITHUB_RAW_BASE + 'Welcome.png' },
-          { name: 'Updates Banner', icon: '📢', file: 'Updates.png', url: GITHUB_RAW_BASE + 'Updates.png' },
-          { name: 'Important Banner', icon: '❗', file: 'Important.png', url: GITHUB_RAW_BASE + 'Important.png' },
-          { name: 'Reminder Banner', icon: '⏰', file: 'Reminder.png', url: GITHUB_RAW_BASE + 'Reminder.png' }
+          { name: 'Welcome Banner', icon: '👋', file: 'Welcome.png' },
+          { name: 'Updates Banner', icon: '📢', file: 'Updates.png' },
+          { name: 'Important Banner', icon: '❗', file: 'Important.png' },
+          { name: 'Reminder Banner', icon: '⏰', file: 'Reminder.png' }
         ];
 
+        const activeBannerFile = ref('Welcome.png');
+
+        const getBaseUrl = () => sources[assetSource.value] || sources.github_pages;
+
         const banner = ref({
-          url: GITHUB_RAW_BASE + 'Welcome.png',
+          url: sources.github_pages + 'Welcome.png',
           alt: 'Welcome Banner'
         });
 
@@ -393,12 +421,27 @@
           name: 'Brian Barrick',
           department: 'Political Science Department',
           college: 'Los Angeles Harbor College',
-          signatureUrl: GITHUB_RAW_BASE + 'Signature.png'
+          signatureUrl: sources.github_pages + 'Signature.png'
         });
 
+        const updateAssetBaseUrl = () => {
+          const base = getBaseUrl();
+          banner.value.url = base + activeBannerFile.value;
+          profile.value.signatureUrl = base + 'Signature.png';
+        };
+
         const setBannerPreset = (b) => {
-          banner.value.url = b.url;
+          activeBannerFile.value = b.file;
+          banner.value.url = getBaseUrl() + b.file;
           banner.value.alt = b.name;
+        };
+
+        const handleImgError = (e) => {
+          // Fallback to relative path if external URL fails
+          if (!e.target.src.includes('banners/')) {
+            const fileName = e.target.src.split('/').pop();
+            e.target.src = 'banners/' + fileName;
+          }
         };
 
         // Color Palettes Mapping
@@ -415,8 +458,8 @@
 
         // BENCHMARK PRESET LOADER
         const loadBenchmarkPreset = () => {
-          banner.value.url = GITHUB_RAW_BASE + 'Welcome.png';
-          banner.value.alt = 'Welcome Banner';
+          activeBannerFile.value = 'Welcome.png';
+          updateAssetBaseUrl();
 
           sections.value = [
             {
@@ -647,7 +690,7 @@
             }
           });
 
-          // 3. SIGNATURE BLOCK (Hardcoded to Signature.png)
+          // 3. SIGNATURE BLOCK
           html += `<p style="margin-top: 32px; margin-bottom: 8px;">Sincerely,</p>\n`;
           if (profile.value.signatureUrl) {
             html += `<p style="margin-bottom: 8px;"><img role="presentation" src="${profile.value.signatureUrl}" alt="${profile.value.name}" width="152" height="72" style="display: block;" /></p>\n`;
@@ -664,7 +707,8 @@
         const saveDefaults = () => {
           localStorage.setItem('canvas_announcement_profile', JSON.stringify({
             profile: profile.value,
-            banner: banner.value
+            banner: banner.value,
+            assetSource: assetSource.value
           }));
           alert('Profile defaults saved to browser storage!');
         };
@@ -685,26 +729,27 @@
         };
 
         onMounted(() => {
-          // Load saved defaults if available
           const saved = localStorage.getItem('canvas_announcement_profile');
           if (saved) {
             try {
               const parsed = JSON.parse(saved);
               if (parsed.profile) profile.value = parsed.profile;
               if (parsed.banner) banner.value = parsed.banner;
+              if (parsed.assetSource) assetSource.value = parsed.assetSource;
             } catch(e){}
           }
-          // Ensure Signature is locked to GitHub raw path
-          profile.value.signatureUrl = GITHUB_RAW_BASE + 'Signature.png';
-          // Load initial benchmark sample
           loadBenchmarkPreset();
         });
 
         return {
           viewMode,
           copied,
+          assetSource,
+          activeBannerFile,
           presetBanners,
+          updateAssetBaseUrl,
           setBannerPreset,
+          handleImgError,
           palettes,
           banner,
           profile,
