@@ -210,9 +210,9 @@
                   </div>
                 </div>
 
-                <div class="grid grid-cols-2 gap-3">
+                <div class="grid grid-cols-3 gap-3">
                   <div>
-                    <label class="block text-[11px] font-semibold text-slate-500 mb-1">Color Theme Palette</label>
+                    <label class="block text-[11px] font-semibold text-slate-500 mb-1">Color Theme</label>
                     <select v-model="sec.colorKey" class="w-full text-xs p-2 border border-slate-200 rounded bg-white">
                       <option v-for="(pal, key) in palettes" :key="key" :value="key">
                         {{ pal.name }}
@@ -220,10 +220,18 @@
                     </select>
                   </div>
                   <div>
-                    <label class="block text-[11px] font-semibold text-slate-500 mb-1">Card Container Style</label>
+                    <label class="block text-[11px] font-semibold text-slate-500 mb-1">Container Style</label>
                     <select v-model="sec.type" class="w-full text-xs p-2 border border-slate-200 rounded bg-white">
-                      <option value="card">Filled Background Card</option>
-                      <option value="border_only">Border-Left Only (Clean)</option>
+                      <option value="card">Filled Card</option>
+                      <option value="border_only">Border-Left Only</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-[11px] font-semibold text-slate-500 mb-1">Corner Rounding</label>
+                    <select v-model="sec.borderRadius" class="w-full text-xs p-2 border border-slate-200 rounded bg-white font-medium">
+                      <option value="8px">Rounded (8px)</option>
+                      <option value="0px">Flat / Square (0px)</option>
+                      <option value="14px">Soft Round (14px)</option>
                     </select>
                   </div>
                 </div>
@@ -279,7 +287,7 @@
                 </div>
 
                 <!-- BOX STYLING CONTROLS -->
-                <div class="grid grid-cols-2 gap-3">
+                <div class="grid grid-cols-3 gap-3">
                   <div>
                     <label class="block text-[11px] font-semibold text-slate-500 mb-1">Color Palette</label>
                     <select v-model="sec.colorKey" class="w-full text-xs p-2 border border-slate-200 rounded bg-white">
@@ -289,12 +297,20 @@
                     </select>
                   </div>
                   <div>
-                    <label class="block text-[11px] font-semibold text-slate-500 mb-1">Box Container Border Style</label>
+                    <label class="block text-[11px] font-semibold text-slate-500 mb-1">Container Border Style</label>
                     <select v-model="sec.boxStyle" class="w-full text-xs p-2 border border-slate-200 rounded bg-white">
-                      <option value="bordered">All-Around Thin Border (Classic)</option>
+                      <option value="bordered">All-Around Thin Border</option>
                       <option value="card_accent">Thick Left Accent Border</option>
                       <option value="dashed">Dashed Outline</option>
                       <option value="clean">Minimal (No Border)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-[11px] font-semibold text-slate-500 mb-1">Corner Rounding</label>
+                    <select v-model="sec.borderRadius" class="w-full text-xs p-2 border border-slate-200 rounded bg-white font-medium">
+                      <option value="8px">Rounded (8px)</option>
+                      <option value="0px">Flat / Square (0px)</option>
+                      <option value="14px">Soft Round (14px)</option>
                     </select>
                   </div>
                 </div>
@@ -478,6 +494,7 @@
               id: 1,
               type: 'card',
               colorKey: 'blue',
+              borderRadius: '8px',
               emoji: '👋',
               title: 'Welcome to Political Science',
               body: 'I am excited to welcome you to this class and greatly look forward to our time together. This online asynchronous course moves quickly, so be sure to use good time management skills throughout. I am here to help every step of the way. Below are some important details and updates for week 1.',
@@ -487,6 +504,7 @@
               id: 2,
               type: 'border_only',
               colorKey: 'blue',
+              borderRadius: '0px',
               emoji: '📅',
               title: 'Class Begins Today: Monday, August 31st',
               body: 'This is an online <strong>asynchronous course</strong>, which means that we never meet live. You can complete assignments on your own schedule, but don’t fall behind. Good time management is the key to success!',
@@ -496,6 +514,7 @@
               id: 3,
               type: 'card',
               colorKey: 'red',
+              borderRadius: '8px',
               emoji: '❗',
               title: 'Required to Stay Enrolled',
               body: 'This is a high-demand course, with a full roster. To remain in the class, you must <strong>submit the first discussion assignment by Thursday, September 3rd</strong>. Students who do not submit the discussion assignment by then may be dropped for non-attendance.',
@@ -510,6 +529,7 @@
               title: 'What’s Due This Week',
               colorKey: 'blue',
               boxStyle: 'bordered',
+              borderRadius: '8px',
               groups: [
                 {
                   id: 'g_1',
@@ -532,6 +552,7 @@
               id: 5,
               type: 'border_only',
               colorKey: 'blue',
+              borderRadius: '0px',
               emoji: '📆',
               title: 'Weekly Deadlines',
               body: 'Aside from our first discussion post, class assignments are always due on <strong>Sundays</strong>. You may submit them early if you’d like.',
@@ -541,6 +562,7 @@
               id: 6,
               type: 'border_only',
               colorKey: 'blue',
+              borderRadius: '0px',
               emoji: '📬',
               title: 'Need Help?',
               body: 'If you ever have any questions or would like to speak with me, please feel free to reach out. I am always happy to discuss. You can find my contact information on the course homepage. I am looking forward to a great semester together!',
@@ -555,6 +577,7 @@
               id: Date.now(),
               type: type,
               colorKey: 'blue',
+              borderRadius: type === 'card' ? '8px' : '0px',
               emoji: '📌',
               title: 'New Section Title',
               body: 'Enter your section content here...',
@@ -578,6 +601,7 @@
               title: 'What’s Due This Week',
               colorKey: 'blue',
               boxStyle: 'bordered',
+              borderRadius: '8px',
               groups: [
                 {
                   id: 'g_' + Date.now(),
@@ -638,14 +662,17 @@
 
           // 2. SECTIONS
           sections.value.forEach(sec => {
+            const rad = sec.borderRadius || (sec.type === 'card' ? '8px' : '0px');
+
             if (sec.type === 'card' || sec.type === 'border_only') {
               const pal = palettes[sec.colorKey] || palettes.blue;
               const isCard = sec.type === 'card';
               
-              const bgStyle = isCard ? `background-color: ${pal.bg}; border-radius: 8px; ` : '';
+              const bgStyle = isCard ? `background-color: ${pal.bg}; ` : '';
               const borderStyle = `border-left: 5px solid ${pal.border}; `;
+              const radiusStyle = rad && rad !== '0px' ? `border-radius: ${rad}; ` : '';
 
-              html += `<div style="${bgStyle}${borderStyle}padding: 18px; margin-bottom: 24px;">\n`;
+              html += `<div style="${bgStyle}${borderStyle}${radiusStyle}padding: 18px; margin-bottom: 24px;">\n`;
               html += `  <h3 style="margin-top: 0; color: ${pal.title}; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">${sec.emoji ? sec.emoji + ' ' : ''}${sec.title}</h3>\n`;
               html += `  <p style="margin-bottom: ${sec.hasButton ? '12px' : '0'}; color: #2c3e50; line-height: 1.6;">${sec.body}</p>\n`;
 
@@ -678,7 +705,9 @@
                 containerBorder = 'none;';
               }
 
-              html += `<div style="background-color: ${pal.bg}; padding: 18px; border: ${containerBorder} border-radius: 8px; margin-bottom: 24px;">\n`;
+              const radiusStyle = rad && rad !== '0px' ? `border-radius: ${rad}; ` : '';
+
+              html += `<div style="background-color: ${pal.bg}; padding: 18px; border: ${containerBorder} ${radiusStyle}margin-bottom: 24px;">\n`;
               html += `  <h3 style="margin-top: 0; color: ${pal.title}; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">${sec.emoji ? sec.emoji + ' ' : ''}${sec.title}</h3>\n`;
 
               sec.groups.forEach((group, gidx) => {
@@ -748,7 +777,6 @@
         };
 
         onMounted(() => {
-          // Restore full auto-saved state from localStorage if available
           const savedState = localStorage.getItem('canvas_announcement_state');
           if (savedState) {
             try {
@@ -767,7 +795,6 @@
               console.error('Error loading saved state:', e);
             }
           }
-          // Fallback to initial benchmark sample if no saved state
           loadBenchmarkPreset();
         });
 
