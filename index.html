@@ -68,14 +68,14 @@
             <h2 class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
               <i class="fa-solid fa-globe text-blue-400"></i> Image Asset Hosting Source
             </h2>
-            <span class="text-[10px] bg-blue-950 text-blue-300 px-2 py-0.5 rounded border border-blue-800">Public vs Relative</span>
+            <span class="text-[10px] bg-emerald-950 text-emerald-300 px-2 py-0.5 rounded border border-emerald-800 font-semibold">GitHub Raw Default</span>
           </div>
 
           <div class="space-y-2">
             <label class="block text-[11px] text-slate-400">Where are your banner images hosted for Canvas?</label>
             <select v-model="assetSource" @change="updateAssetBaseUrl" class="w-full text-xs p-2 bg-slate-800 border border-slate-700 rounded text-slate-100 font-semibold focus:outline-none">
+              <option value="github_raw">GitHub Raw (https://raw.githubusercontent.com/OpenAudioOER/canvas-announcements/main/banners/)</option>
               <option value="github_pages">GitHub Pages (https://openaudiooer.github.io/canvas-announcements/banners/)</option>
-              <option value="github_raw">GitHub Raw (https://raw.githubusercontent.com/OpenAudioOER/...)</option>
               <option value="relative">Local Relative Folder (banners/)</option>
             </select>
           </div>
@@ -422,11 +422,11 @@
       setup() {
         const viewMode = ref('preview');
         const copied = ref(false);
-        const assetSource = ref('github_pages');
+        const assetSource = ref('github_raw'); // Default to GitHub Raw for guaranteed public loading
 
         const sources = {
-          github_pages: 'https://openaudiooer.github.io/canvas-announcements/banners/',
           github_raw: 'https://raw.githubusercontent.com/OpenAudioOER/canvas-announcements/main/banners/',
+          github_pages: 'https://openaudiooer.github.io/canvas-announcements/banners/',
           relative: 'banners/'
         };
 
@@ -439,10 +439,10 @@
 
         const activeBannerFile = ref('Welcome.png');
 
-        const getBaseUrl = () => sources[assetSource.value] || sources.github_pages;
+        const getBaseUrl = () => sources[assetSource.value] || sources.github_raw;
 
         const banner = ref({
-          url: sources.github_pages + 'Welcome.png',
+          url: sources.github_raw + 'Welcome.png',
           alt: 'Welcome Banner'
         });
 
@@ -450,7 +450,7 @@
           name: 'Brian Barrick',
           department: 'Political Science Department',
           college: 'Los Angeles Harbor College',
-          signatureUrl: sources.github_pages + 'Signature.png'
+          signatureUrl: sources.github_raw + 'Signature.png'
         });
 
         const sections = ref([]);
