@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Canvas Announcement Builder | OpenAudioOER</title>
+  <!-- Tailwind CSS CDN for Builder UI -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Vue 3 CDN for Reactive UI -->
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    /* Custom scrollbars for clean UI */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+  </style>
+</head>
+<body class="bg-slate-100 font-sans text-slate-800 antialiased min-h-screen">
+  <div id="app" class="flex flex-col h-screen overflow-hidden">
+
+    <!-- TOP BAR -->
+    <header class="bg-slate-900 text-white px-6 py-3.5 flex items-center justify-between shadow-md shrink-0">
+      <div class="flex items-center space-x-3">
+        <div class="bg-blue-600 text-white p-2 rounded-lg text-lg">
+          <i class="fa-solid fa-bullhorn"></i>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-lg font-bold leading-tight">Canvas Announcement Builder</h1>
+            <span class="bg-slate-800 text-blue-400 text-[11px] font-mono px-2 py-0.5 rounded border border-slate-700 flex items-center gap-1">
+              <i class="fa-brands fa-github"></i> OpenAudioOER/canvas-announcements
+            </span>
+          </div>
+          <p class="text-xs text-slate-400">Generates 100% Canvas RCE Sanitizer-Compliant Inline HTML</p>
+        </div>
+      </div>
+      <div class="flex items-center space-x-2">
+        <button @click="loadBenchmarkPreset" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-2 rounded-md transition border border-slate-700 flex items-center gap-1.5">
+          <i class="fa-solid fa-rotate-left"></i> Reset Preset
+        </button>
+        <button @click="saveDefaults" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-2 rounded-md transition border border-slate-700 flex items-center gap-1.5">
+          <i class="fa-solid fa-floppy-disk"></i> Save Profile
+        </button>
+        <button @click="exportHTMLFile" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-2 rounded-md transition border border-slate-700 flex items-center gap-1.5">
+          <i class="fa-solid fa-file-arrow-down"></i> Export .html
+        </button>
+        <button @click="copyCanvasHTML" class="bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold px-4 py-2 rounded-md shadow-sm transition flex items-center gap-2">
+          <i class="fa-solid" :class="copied ? 'fa-check' : 'fa-copy'"></i>
+          <span>{{ copied ? 'Copied to Clipboard!' : 'Copy Canvas HTML' }}</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- MAIN TWO-COLUMN CONTAINER -->
+    <div class="flex-1 flex overflow-hidden">
+      
+      <!-- LEFT COLUMN: CONTROLS & FORM EDITORS -->
+      <aside class="w-1/2 flex flex-col border-r border-slate-200 bg-white overflow-y-auto p-6 space-y-6">
+
+        <!-- GITHUB REPOSITORY & BANNER PICKER INTEGRATION -->
+        <section class="bg-slate-900 text-white rounded-xl p-4 space-y-4 shadow-sm">
+          <div class="flex items-center justify-between">
+            <h2 class="text-sm font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2">
+              <i class="fa-brands fa-github text-blue-400 text-base"></i> GitHub Asset Integration
+            </h2>
+            <span class="text-[10px] bg-blue-950 text-blue-300 px-2 py-0.5 rounded border border-blue-800 font-mono">OpenAudioOER</span>
+          </div>
+
+          <div class="grid grid-cols-3 gap-3 text-xs">
+            <div>
+              <label class="block text-[11px] text-slate-400 mb-1">GitHub Owner</label>
+              <input type="text" v-model="github.owner" class="w-full p-2 bg-slate-800 border border-slate-700 rounded text-slate-100 font-mono" />
+            </div>
+            <div>
+              <label class="block text-[11px] text-slate-400 mb-1">Repository Name</label>
+              <input type="text" v-model="github.repo" class="w-full p-2 bg-slate-800 border border-slate-700 rounded text-slate-100 font-mono" />
+            </div>
+            <div>
+              <label class="block text-[11px] text-slate-400 mb-1">Branch</label>
+              <input type="text" v-model="github.branch" class="w-full p-2 bg-slate-800 border border-slate-700 rounded text-slate-100 font-mono" />
+            </div>
+          </div>
+
+          <!-- OPTIONAL TOKEN FOR PRIVATE REPOS -->
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <label class="text-[11px] text-slate-400">GitHub Personal Access Token (Optional for Private Repos)</label>
+              <button @click="fetchGitHubRepoImages" class="text-[11px] text-blue-400 hover:underline flex items-center gap-1">
+                <i class="fa-solid fa-arrows-rotate" :class="loadingImages ? 'animate-spin' : ''"></i> Fetch Assets
+              </button>
+            </div>
+            <input type="password" v-model="github.token" placeholder="ghp_..." class="w-full text-xs p-2 bg-slate-800 border border-slate-700 rounded text-slate-100 font-mono" />
+          </div>
+
+          <!-- GITHUB ASSET THUMBNAIL PICKER -->
+          <div v-if="repoImages.length > 0" class="space-y-2 pt-1 border-t border-slate-800">
+            <label class="block text-[11px] text-slate-400 font-semibold">Select Banner Image from {{ github.repo }}:</label>
+            <div class="grid grid-cols-3 gap-2 max-h-36 overflow-y-auto p-1 bg-slate-950 rounded border border-slate-800">
+              <div v-for="img in repoImages" :key="img.path" @click="selectGitHubBanner(img)" 
+                :class="banner.url === img.rawUrl ? 'ring-2 ring-blue-500 bg-blue-900/30' : 'hover:bg-slate-800'"
+                class="p-1.5 rounded cursor-pointer transition border border-slate-800 flex flex-col items-center text-center group">
+                <img :src="img.rawUrl" :alt="img.name" class="h-12 w-full object-cover rounded mb-1" />
+                <span class="text-[10px] text-slate-300 font-mono truncate w-full group-hover:text-blue-300">{{ img.name }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div v-else class="text-[11px] text-slate-400 bg-slate-800/50 p-2.5 rounded border border-slate-800 flex items-center justify-between">
+            <span>Raw Asset Base URL: <code class="text-blue-300 font-mono text-[10px]">{{ rawBaseUrl }}</code></span>
+            <button @click="fetchGitHubRepoImages" class="text-blue-400 hover:text-blue-300 font-semibold text-[11px]">Load Repo Images</button>
+          </div>
+        </section>
+
+        <!-- GLOBAL PROFILE & BANNER CONFIG -->
+        <section class="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-4">
+          <h2 class="text-sm font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
+            <i class="fa-solid fa-image text-blue-600"></i> Announcement Banner & Profile
+          </h2>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div class="col-span-2">
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Active Banner Image URL</label>
+              <input type="text" v-model="banner.url" placeholder="https://raw.githubusercontent.com/OpenAudioOER/canvas-announcements/main/banners/week1.png" 
+                class="w-full text-xs p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono" />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Banner Alt Text</label>
+              <input type="text" v-model="banner.alt" placeholder="Course Banner Image" 
+                class="w-full text-xs p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Instructor Name</label>
+              <input type="text" v-model="profile.name" placeholder="Brian Barrick" 
+                class="w-full text-xs p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Department</label>
+              <input type="text" v-model="profile.department" placeholder="Political Science Department" 
+                class="w-full text-xs p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">College / Institution</label>
+              <input type="text" v-model="profile.college" placeholder="Los Angeles Harbor College" 
+                class="w-full text-xs p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+            </div>
+            <div class="col-span-2">
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Signature Image URL (Optional)</label>
+              <input type="text" v-model="profile.signatureUrl" placeholder="https://ilearn.instructure.com/courses/.../signature.png" 
+                class="w-full text-xs p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono" />
+            </div>
+          </div>
+        </section>
+
+        <!-- DYNAMIC SECTIONS LIST -->
+        <section class="space-y-4">
+          <div class="flex items-center justify-between">
+            <h2 class="text-sm font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
+              <i class="fa-solid fa-layer-group text-blue-600"></i> Announcement Segments
+            </h2>
+            <div class="flex gap-2">
+              <button @click="addSection('card')" class="text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold px-2.5 py-1.5 rounded border border-blue-200 transition">
+                + Card Segment
+              </button>
+              <button @click="addSection('video')" class="text-xs bg-purple-50 hover:bg-purple-100 text-purple-700 font-semibold px-2.5 py-1.5 rounded border border-purple-200 transition">
+                + Video Embed
+              </button>
+              <button @click="addSection('duedates')" class="text-xs bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-semibold px-2.5 py-1.5 rounded border border-emerald-200 transition">
+                + Task / Due Dates Box
+              </button>
+            </div>
+          </div>
+
+          <div class="space-y-4">
+            <div v-for="(sec, idx) in sections" :key="sec.id" class="border border-slate-200 rounded-xl p-4 bg-white shadow-sm space-y-3 relative group">
+              
+              <!-- SECTION HEADER CONTROL -->
+              <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+                <span class="text-xs font-bold text-slate-500 flex items-center gap-1.5">
+                  <i class="fa-solid fa-grip-vertical text-slate-300"></i>
+                  Segment #{{ idx + 1 }} ({{ getSectionTypeName(sec.type) }})
+                </span>
+                <div class="flex items-center space-x-1">
+                  <button @click="moveSection(idx, -1)" :disabled="idx === 0" class="text-slate-400 hover:text-slate-600 text-xs px-1 disabled:opacity-30">
+                    <i class="fa-solid fa-arrow-up"></i>
+                  </button>
+                  <button @click="moveSection(idx, 1)" :disabled="idx === sections.length - 1" class="text-slate-400 hover:text-slate-600 text-xs px-1 disabled:opacity-30">
+                    <i class="fa-solid fa-arrow-down"></i>
+                  </button>
+                  <button @click="removeSection(idx)" class="text-rose-500 hover:text-rose-700 text-xs px-2 py-0.5">
+                    <i class="fa-solid fa-trash"></i>
+                  </button>
+                </div>
+              </div>
+
+              <!-- CARD / BORDER SEGMENT FORM -->
+              <template v-if="sec.type === 'card' || sec.type === 'border_only'">
+                <div class="grid grid-cols-3 gap-3">
+                  <div>
+                    <label class="block text-[11px] font-semibold text-slate-500 mb-1">Emoji / Icon</label>
+                    <input type="text" v-model="sec.emoji" class="w-full text-xs p-2 border border-slate-200 rounded" />
+                  </div>
+                  <div class="col-span-2">
+                    <label class="block text-[11px] font-semibold text-slate-500 mb-1">Heading Title</label>
+                    <input type="text" v-model="sec.title" class="w-full text-xs p-2 border border-slate-200 rounded font-semibold" />
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                  <div>
+                    <label class="block text-[11px] font-semibold text-slate-500 mb-1">Color Theme Palette</label>
+                    <select v-model="sec.colorKey" class="w-full text-xs p-2 border border-slate-200 rounded bg-white">
+                      <option v-for="(pal, key) in palettes" :key="key" :value="key">
+                        {{ pal.name }}
+                      </option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-[11px] font-semibold text-slate-500 mb-1">Card Container Style</label>
+                    <select v-model="sec.type" class="w-full text-xs p-2 border border-slate-200 rounded bg-white">
+                      <option value="card">Filled Background Card</option>
+                      <option value="border_only">Border-Left Only (Clean)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block text-[11px] font-semibold text-slate-500 mb-1">Body Text (HTML formatting enabled)</label>
+                  <textarea v-model="sec.body" rows="3" class="w-full text-xs p-2 border border-slate-200 rounded leading-relaxed"></textarea>
+                </div>
+
+                <!-- OPTIONAL CALL-TO-ACTION BUTTON / LINK -->
+                <div class="bg-slate-50 p-3 rounded border border-slate-100 space-y-2">
+                  <div class="flex items-center justify-between">
+                    <label class="text-[11px] font-bold text-slate-600 flex items-center gap-1">
+                      <input type="checkbox" v-model="sec.hasButton" class="rounded text-blue-600"> Include Action Button / Link
+                    </label>
+                  </div>
+                  <div v-if="sec.hasButton" class="grid grid-cols-2 gap-2 pt-1">
+                    <div>
+                      <input type="text" v-model="sec.buttonText" placeholder="Button Text (e.g. 💬 Intro Discussion)" class="w-full text-xs p-1.5 border border-slate-200 rounded" />
+                    </div>
+                    <div>
+                      <input type="text" v-model="sec.buttonUrl" placeholder="Canvas Target URL" class="w-full text-xs p-1.5 border border-slate-200 rounded" />
+                    </div>
+                  </div>
+                </div>
+              </template>
+
+              <!-- VIDEO EMBED FORM -->
+              <template v-else-if="sec.type === 'video'">
+                <div>
+                  <label class="block text-[11px] font-semibold text-slate-500 mb-1">Video Title / Heading</label>
+                  <input type="text" v-model="sec.title" placeholder="🎥 Week 1 Lecture Video" class="w-full text-xs p-2 border border-slate-200 rounded font-semibold" />
+                </div>
+                <div>
+                  <label class="block text-[11px] font-semibold text-slate-500 mb-1">Video Iframe Embed Code or Video URL</label>
+                  <textarea v-model="sec.rawEmbed" @input="parseVideoEmbed(sec)" rows="2" placeholder='<iframe src="https://www.youtube.com/embed/..." ...></iframe>' class="w-full text-xs p-2 border border-slate-200 rounded font-mono"></textarea>
+                  <p class="text-[10px] text-slate-400 mt-1">Paste standard YouTube, Vimeo, or Canvas Studio embed code/URL. Automatically converted to 16:9 Canvas responsive wrapper.</p>
+                </div>
+              </template>
+
+              <!-- HIGHLY CUSTOMIZABLE DUE DATES / TASKS BOX FORM -->
+              <template v-else-if="sec.type === 'duedates'">
+                <!-- BOX TITLE & EMOJI -->
+                <div class="grid grid-cols-3 gap-3">
+                  <div>
+                    <label class="block text-[11px] font-semibold text-slate-500 mb-1">Emoji</label>
+                    <input type="text" v-model="sec.emoji" placeholder="📌" class="w-full text-xs p-2 border border-slate-200 rounded" />
+                  </div>
+                  <div class="col-span-2">
+                    <label class="block text-[11px] font-semibold text-slate-500 mb-1">Box Header Title</label>
+                    <input type="text" v-model="sec.title" placeholder="What’s Due This Week" class="w-full text-xs p-2 border border-slate-200 rounded font-semibold" />
+                  </div>
+                </div>
+
+                <!-- BOX STYLING CONTROLS -->
+                <div class="grid grid-cols-2 gap-3">
+                  <div>
+                    <label class="block text-[11px] font-semibold text-slate-500 mb-1">Color Palette</label>
+                    <select v-model="sec.colorKey" class="w-full text-xs p-2 border border-slate-200 rounded bg-white">
+                      <option v-for="(pal, key) in palettes" :key="key" :value="key">
+                        {{ pal.name }}
+                      </option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-[11px] font-semibold text-slate-500 mb-1">Box Container Border Style</label>
+                    <select v-model="sec.boxStyle" class="w-full text-xs p-2 border border-slate-200 rounded bg-white">
+                      <option value="bordered">All-Around Thin Border (Classic)</option>
+                      <option value="card_accent">Thick Left Accent Border</option>
+                      <option value="dashed">Dashed Outline</option>
+                      <option value="clean">Minimal (No Border)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- DYNAMIC DEADLINE GROUPS -->
+                <div class="space-y-3 pt-2">
+                  <div class="flex items-center justify-between border-t border-slate-200 pt-3">
+                    <span class="text-xs font-bold text-slate-600">Deadline Groups / Subsections</span>
+                    <button @click="addDueGroup(sec)" class="text-[11px] bg-blue-50 text-blue-600 font-semibold px-2 py-1 rounded border border-blue-200 hover:bg-blue-100 transition">
+                      + Add Group (e.g. Due Friday)
+                    </button>
+                  </div>
+
+                  <div v-for="(group, gidx) in sec.groups" :key="group.id" class="bg-slate-50 p-3 rounded-lg border border-slate-200 space-y-2.5">
+                    
+                    <!-- GROUP HEADER & REMOVE -->
+                    <div class="flex items-center justify-between gap-2">
+                      <input type="text" v-model="group.title" placeholder="Group Title (e.g., Due Thursday, Sept 3rd:)" class="w-full text-xs p-1.5 border border-slate-200 rounded font-semibold text-slate-800" />
+                      <button @click="sec.groups.splice(gidx, 1)" :disabled="sec.groups.length <= 1" class="text-rose-500 text-xs px-1 disabled:opacity-30">
+                        <i class="fa-solid fa-trash"></i>
+                      </button>
+                    </div>
+
+                    <!-- TASK ITEMS LIST -->
+                    <div class="space-y-2 pl-2 border-l-2 border-slate-200">
+                      <div v-for="(item, iidx) in group.items" :key="iidx" class="space-y-1 bg-white p-2 rounded border border-slate-100 shadow-2xs">
+                        <div class="flex gap-2 items-center">
+                          <input type="text" v-model="item.icon" placeholder="📝" class="w-10 text-xs p-1 border border-slate-200 rounded text-center shrink-0" />
+                          <input type="text" v-model="item.text" placeholder="Task Title (e.g. Video Discussion #1)" class="w-full text-xs p-1 border border-slate-200 rounded font-medium" />
+                          <button @click="group.items.splice(iidx, 1)" class="text-rose-400 hover:text-rose-600 text-xs px-1"><i class="fa-solid fa-times"></i></button>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 pt-1">
+                          <input type="text" v-model="item.url" placeholder="Canvas Target Link URL (optional)" class="w-full text-[11px] p-1 border border-slate-200 rounded text-slate-500" />
+                          <input type="text" v-model="item.note" placeholder="Extra Note (e.g., by 11:59 PM)" class="w-full text-[11px] p-1 border border-slate-200 rounded text-slate-500" />
+                        </div>
+                      </div>
+
+                      <button @click="group.items.push({icon: '📝', text: '', url: '', note: ''})" class="text-[11px] text-blue-600 font-semibold hover:underline flex items-center gap-1 pt-1">
+                        <i class="fa-solid fa-plus text-[9px]"></i> Add Task Item to this Group
+                      </button>
+                    </div>
+
+                  </div>
+                </div>
+              </template>
+
+            </div>
+          </div>
+        </section>
+
+      </aside>
+
+      <!-- RIGHT COLUMN: LIVE CANVAS PREVIEW & GENERATED CODE -->
+      <main class="w-1/2 flex flex-col bg-slate-200 overflow-hidden">
+        
+        <!-- PREVIEW MODE TABS -->
+        <div class="bg-slate-300 px-6 py-2 flex items-center justify-between border-b border-slate-300">
+          <div class="flex space-x-2">
+            <button @click="viewMode = 'preview'" :class="viewMode === 'preview' ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-600 hover:text-slate-900'" class="text-xs font-bold px-3 py-1.5 rounded transition">
+              <i class="fa-solid fa-eye"></i> Live Canvas Preview
+            </button>
+            <button @click="viewMode = 'code'" :class="viewMode === 'code' ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-600 hover:text-slate-900'" class="text-xs font-bold px-3 py-1.5 rounded transition">
+              <i class="fa-solid fa-code"></i> Generated HTML Output
+            </button>
+          </div>
+          <span class="text-[11px] text-slate-500 font-medium">Rendered with Canvas RCE Standard Styles</span>
+        </div>
+
+        <!-- CANVAS PREVIEW CONTAINER -->
+        <div v-show="viewMode === 'preview'" class="flex-1 overflow-y-auto p-8">
+          <!-- CANVAS SIMULATED CONTAINER -->
+          <div class="bg-white rounded-xl shadow-lg border border-slate-200 p-8 max-w-3xl mx-auto min-h-[500px]">
+            <div v-html="generatedHTML"></div>
+          </div>
+        </div>
+
+        <!-- HTML CODE OUTPUT CONTAINER -->
+        <div v-show="viewMode === 'code'" class="flex-1 flex flex-col p-6 overflow-hidden">
+          <div class="flex justify-between items-center bg-slate-900 text-slate-300 px-4 py-2 rounded-t-lg text-xs font-mono">
+            <span>canvas_announcement.html</span>
+            <button @click="copyCanvasHTML" class="text-blue-400 hover:text-blue-300 font-sans font-semibold">
+              <i class="fa-solid" :class="copied ? 'fa-check' : 'fa-copy'"></i> {{ copied ? 'Copied!' : 'Copy Code' }}
+            </button>
+          </div>
+          <textarea readonly :value="generatedHTML" class="flex-1 bg-slate-950 text-slate-200 font-mono text-xs p-4 rounded-b-lg overflow-y-auto focus:outline-none leading-relaxed border-t-0"></textarea>
+        </div>
+
+      </main>
+
+    </div>
+  </div>
+
+  <script>
+    const { createApp, ref, computed, onMounted } = Vue;
+
+    createApp({
+      setup() {
+        const viewMode = ref('preview');
+        const copied = ref(false);
+        const loadingImages = ref(false);
+
+        // GitHub Repository Configuration
+        const github = ref({
+          owner: 'OpenAudioOER',
+          repo: 'canvas-announcements',
+          branch: 'main',
+          token: ''
+        });
+
+        const repoImages = ref([]);
+
+        const rawBaseUrl = computed(() => {
+          return `https://raw.githubusercontent.com/${github.value.owner}/${github.value.repo}/${github.value.branch}/`;
+        });
+
+        // Fetch images from OpenAudioOER/canvas-announcements repository via GitHub API
+        const fetchGitHubRepoImages = async () => {
+          loadingImages.value = true;
+          repoImages.value = [];
+          try {
+            const url = `https://api.github.com/repos/${github.value.owner}/${github.value.repo}/git/trees/${github.value.branch}?recursive=1`;
+            const headers = {};
+            if (github.value.token) {
+              headers['Authorization'] = `token ${github.value.token}`;
+            }
+            const res = await fetch(url, { headers });
+            if (res.ok) {
+              const data = await res.json();
+              const imageExts = ['.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp'];
+              repoImages.value = (data.tree || [])
+                .filter(file => file.type === 'blob' && imageExts.some(ext => file.path.toLowerCase().endsWith(ext)))
+                .map(file => ({
+                  name: file.path.split('/').pop(),
+                  path: file.path,
+                  rawUrl: `https://raw.githubusercontent.com/${github.value.owner}/${github.value.repo}/${github.value.branch}/${file.path}`
+                }));
+            } else {
+              console.warn('GitHub API returned status:', res.status);
+            }
+          } catch(e) {
+            console.error('Failed to fetch GitHub repo images:', e);
+          } finally {
+            loadingImages.value = false;
+          }
+        };
+
+        const selectGitHubBanner = (img) => {
+          banner.value.url = img.rawUrl;
+          banner.value.alt = img.name.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " ");
+        };
+
+        // Color Palettes Mapping
+        const palettes = {
+          blue: { name: 'Primary Blue', border: '#1976d2', bg: '#f7f9fb', title: '#0d47a1', buttonBg: '#1976d2' },
+          red: { name: 'Alert Red', border: '#d32f2f', bg: '#fff5f5', title: '#c62828', buttonBg: '#d32f2f' },
+          amber: { name: 'Warning Amber', border: '#f57c00', bg: '#fff9e6', title: '#e65100', buttonBg: '#f57c00' },
+          green: { name: 'Success Green', border: '#2e7d32', bg: '#f0fdf4', title: '#1b5e20', buttonBg: '#2e7d32' },
+          purple: { name: 'Purple Accent', border: '#7b1fa2', bg: '#faf5ff', title: '#4a148c', buttonBg: '#7b1fa2' },
+          slate: { name: 'Neutral Slate', border: '#64748b', bg: '#f8fafc', title: '#1e293b', buttonBg: '#475569' }
+        };
+
+        const banner = ref({
+          url: 'https://raw.githubusercontent.com/OpenAudioOER/canvas-announcements/main/banners/welcome.png',
+          alt: 'Course Banner'
+        });
+
+        const profile = ref({
+          name: 'Brian Barrick',
+          department: 'Political Science Department',
+          college: 'Los Angeles Harbor College',
+          signatureUrl: 'https://ilearn.instructure.com/courses/379774/files/81532404/preview'
+        });
+
+        const sections = ref([]);
+
+        // BENCHMARK PRESET LOADER
+        const loadBenchmarkPreset = () => {
+          banner.value.url = 'https://ilearn.instructure.com/courses/379774/files/81532458/preview';
+          banner.value.alt = 'Welcome Banner';
+
+          sections.value = [
+            {
+              id: 1,
+              type: 'card',
+              colorKey: 'blue',
+              emoji: '👋',
+              title: 'Welcome to Political Science',
+              body: 'I am excited to welcome you to this class and greatly look forward to our time together. This online asynchronous course moves quickly, so be sure to use good time management skills throughout. I am here to help every step of the way. Below are some important details and updates for week 1.',
+              hasButton: false
+            },
+            {
+              id: 2,
+              type: 'border_only',
+              colorKey: 'blue',
+              emoji: '📅',
+              title: 'Class Begins Today: Monday, August 31st',
+              body: 'This is an online <strong>asynchronous course</strong>, which means that we never meet live. You can complete assignments on your own schedule, but don’t fall behind. Good time management is the key to success!',
+              hasButton: false
+            },
+            {
+              id: 3,
+              type: 'card',
+              colorKey: 'red',
+              emoji: '❗',
+              title: 'Required to Stay Enrolled',
+              body: 'This is a high-demand course, with a full roster. To remain in the class, you must <strong>submit the first discussion assignment by Thursday, September 3rd</strong>. Students who do not submit the discussion assignment by then may be dropped for non-attendance.',
+              hasButton: true,
+              buttonText: '💬 Introduction Discussion',
+              buttonUrl: 'https://ilearn.instructure.com/courses/379774/assignments/10276499'
+            },
+            {
+              id: 4,
+              type: 'duedates',
+              emoji: '📌',
+              title: 'What’s Due This Week',
+              colorKey: 'blue',
+              boxStyle: 'bordered',
+              groups: [
+                {
+                  id: 101,
+                  title: 'Due Thursday, September 3rd:',
+                  items: [
+                    { icon: '📝', text: 'Video Discussion #1', url: 'https://ilearn.instructure.com/courses/379774/assignments/10276499', note: '' }
+                  ]
+                },
+                {
+                  id: 102,
+                  title: 'Due Sunday, September 6th:',
+                  items: [
+                    { icon: '🧠', text: 'Interactive Lecture – Introduction to American Politics', url: '#', note: '' },
+                    { icon: '📖', text: 'Academic Honesty Assignment', url: '#', note: '' }
+                  ]
+                }
+              ]
+            },
+            {
+              id: 5,
+              type: 'border_only',
+              colorKey: 'blue',
+              emoji: '📆',
+              title: 'Weekly Deadlines',
+              body: 'Aside from our first discussion post, class assignments are always due on <strong>Sundays</strong>. You may submit them early if you’d like.',
+              hasButton: false
+            },
+            {
+              id: 6,
+              type: 'border_only',
+              colorKey: 'blue',
+              emoji: '📬',
+              title: 'Need Help?',
+              body: 'If you ever have any questions or would like to speak with me, please feel free to reach out. I am always happy to discuss. You can find my contact information on the course homepage. I am looking forward to a great semester together!',
+              hasButton: false
+            }
+          ];
+        };
+
+        const addSection = (type) => {
+          if (type === 'card' || type === 'border_only') {
+            sections.value.push({
+              id: Date.now(),
+              type: type,
+              colorKey: 'blue',
+              emoji: '📌',
+              title: 'New Section Title',
+              body: 'Enter your section content here...',
+              hasButton: false,
+              buttonText: '',
+              buttonUrl: ''
+            });
+          } else if (type === 'video') {
+            sections.value.push({
+              id: Date.now(),
+              type: 'video',
+              title: '🎥 Video Embed Title',
+              rawEmbed: '',
+              parsedUrl: ''
+            });
+          } else if (type === 'duedates') {
+            sections.value.push({
+              id: Date.now(),
+              type: 'duedates',
+              emoji: '📌',
+              title: 'What’s Due This Week',
+              colorKey: 'blue',
+              boxStyle: 'bordered',
+              groups: [
+                {
+                  id: Date.now(),
+                  title: 'Due Thursday, Date:',
+                  items: [{ icon: '📝', text: 'Task 1 Title', url: '#', note: '' }]
+                }
+              ]
+            });
+          }
+        };
+
+        const addDueGroup = (sec) => {
+          sec.groups.push({
+            id: Date.now(),
+            title: 'Due Sunday, Date:',
+            items: [{ icon: '🧠', text: 'Task Item Title', url: '#', note: '' }]
+          });
+        };
+
+        const removeSection = (idx) => {
+          sections.value.splice(idx, 1);
+        };
+
+        const moveSection = (idx, delta) => {
+          const target = idx + delta;
+          if (target < 0 || target >= sections.value.length) return;
+          const temp = sections.value[idx];
+          sections.value[idx] = sections.value[target];
+          sections.value[target] = temp;
+        };
+
+        const parseVideoEmbed = (sec) => {
+          if (!sec.rawEmbed) return;
+          const match = sec.rawEmbed.match(/src=["']([^"']+)["']/);
+          if (match && match[1]) {
+            sec.parsedUrl = match[1];
+          } else if (sec.rawEmbed.startsWith('http')) {
+            sec.parsedUrl = sec.rawEmbed;
+          }
+        };
+
+        const getSectionTypeName = (type) => {
+          if (type === 'card') return 'Filled Card';
+          if (type === 'border_only') return 'Border-Left';
+          if (type === 'video') return 'Video Embed';
+          if (type === 'duedates') return 'Task / Due Dates Box';
+          return type;
+        };
+
+        // GENERATE COMPLIANT CANVAS INLINE HTML
+        const generatedHTML = computed(() => {
+          let html = '';
+
+          // 1. BANNER IMAGE
+          if (banner.value.url) {
+            html += `<p style="margin-bottom: 24px;"><img id="banner_img" role="presentation" src="${banner.value.url}" alt="${banner.value.alt || ''}" width="100%" height="auto" style="width: 100%; max-width: 100%; height: auto; border-radius: 8px; display: block;" /></p>\n`;
+          }
+
+          // 2. SECTIONS
+          sections.value.forEach(sec => {
+            if (sec.type === 'card' || sec.type === 'border_only') {
+              const pal = palettes[sec.colorKey] || palettes.blue;
+              const isCard = sec.type === 'card';
+              
+              const bgStyle = isCard ? `background-color: ${pal.bg}; border-radius: 8px; ` : '';
+              const borderStyle = `border-left: 5px solid ${pal.border}; `;
+
+              html += `<div style="${bgStyle}${borderStyle}padding: 18px; margin-bottom: 24px;">\n`;
+              html += `  <h3 style="margin-top: 0; color: ${pal.title}; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">${sec.emoji ? sec.emoji + ' ' : ''}${sec.title}</h3>\n`;
+              html += `  <p style="margin-bottom: ${sec.hasButton ? '12px' : '0'}; color: #2c3e50; line-height: 1.6;">${sec.body}</p>\n`;
+
+              if (sec.hasButton && sec.buttonText) {
+                html += `  <p style="margin-bottom: 0;"><a title="${sec.buttonText}" href="${sec.buttonUrl || '#'}" style="display: inline-block; background-color: ${pal.buttonBg}; color: #ffffff; padding: 10px 18px; text-decoration: none; border-radius: 6px; font-weight: bold; font-family: sans-serif;">${sec.buttonText}</a></p>\n`;
+              }
+
+              html += `</div>\n`;
+            } 
+            else if (sec.type === 'video') {
+              const embedUrl = sec.parsedUrl || sec.rawEmbed || 'https://www.youtube.com/embed/dQw4w9WgXcQ';
+              html += `<div style="margin-bottom: 24px;">\n`;
+              if (sec.title) {
+                html += `  <h3 style="margin-top: 0; color: #1565c0; font-family: sans-serif;">${sec.title}</h3>\n`;
+              }
+              html += `  <div style="position: relative; width: 100%; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 8px; background-color: #000000;">\n`;
+              html += `    <iframe src="${embedUrl}" title="${sec.title || 'Video'}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; border-radius: 8px;" allowfullscreen="true" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>\n`;
+              html += `  </div>\n`;
+              html += `</div>\n`;
+            }
+            else if (sec.type === 'duedates') {
+              const pal = palettes[sec.colorKey] || palettes.blue;
+              
+              let containerBorder = '1px solid #ddd;';
+              if (sec.boxStyle === 'card_accent') {
+                containerBorder = `1px solid #e0e0e0; border-left: 5px solid ${pal.border};`;
+              } else if (sec.boxStyle === 'dashed') {
+                containerBorder = `2px dashed ${pal.border};`;
+              } else if (sec.boxStyle === 'clean') {
+                containerBorder = 'none;';
+              }
+
+              html += `<div style="background-color: ${pal.bg}; padding: 18px; border: ${containerBorder} border-radius: 8px; margin-bottom: 24px;">\n`;
+              html += `  <h3 style="margin-top: 0; color: ${pal.title}; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">${sec.emoji ? sec.emoji + ' ' : ''}${sec.title}</h3>\n`;
+
+              sec.groups.forEach((group, gidx) => {
+                const isLastGroup = gidx === sec.groups.length - 1;
+                if (group.title) {
+                  html += `  <p style="margin-bottom: 4px; color: #2c3e50; font-weight: bold;"><strong>${group.title}</strong></p>\n`;
+                }
+                html += `  <ul style="margin-top: 4px; margin-bottom: ${isLastGroup ? '0' : '16px'}; padding-left: 20px;">\n`;
+                group.items.forEach(item => {
+                  if (item.text) {
+                    const iconPrefix = item.icon ? `${item.icon} ` : '';
+                    const linkContent = item.url && item.url !== '#' ? `<a href="${item.url}" style="color: ${pal.buttonBg}; font-weight: 600; text-decoration: underline;">${item.text}</a>` : item.text;
+                    const noteSuffix = item.note ? ` <span style="color: #666; font-size: 0.9em;">(${item.note})</span>` : '';
+                    html += `    <li>${iconPrefix}${linkContent}${noteSuffix}</li>\n`;
+                  }
+                });
+                html += `  </ul>\n`;
+              });
+
+              html += `</div>\n`;
+            }
+          });
+
+          // 3. SIGNATURE BLOCK
+          html += `<p style="margin-top: 32px; margin-bottom: 8px;">Sincerely,</p>\n`;
+          if (profile.value.signatureUrl) {
+            html += `<p style="margin-bottom: 8px;"><img role="presentation" src="${profile.value.signatureUrl}" alt="${profile.value.name}" width="152" height="72" style="display: block;" /></p>\n`;
+          }
+          html += `<p style="line-height: 1.4; margin-top: 0;">\n`;
+          html += `  <strong>${profile.value.name}</strong><br />\n`;
+          html += `  ${profile.value.department}<br />\n`;
+          html += `  ${profile.value.college}\n`;
+          html += `</p>`;
+
+          return html;
+        });
+
+        const saveDefaults = () => {
+          localStorage.setItem('canvas_announcement_profile', JSON.stringify({
+            profile: profile.value,
+            banner: banner.value,
+            github: github.value
+          }));
+          alert('Profile & GitHub settings saved to browser storage!');
+        };
+
+        const copyCanvasHTML = () => {
+          navigator.clipboard.writeText(generatedHTML.value).then(() => {
+            copied.value = true;
+            setTimeout(() => { copied.value = false; }, 2500);
+          });
+        };
+
+        const exportHTMLFile = () => {
+          const blob = new Blob([generatedHTML.value], { type: 'text/html' });
+          const a = document.createElement('a');
+          a.href = URL.createObjectURL(blob);
+          a.download = 'announcement.html';
+          a.click();
+        };
+
+        onMounted(() => {
+          // Load saved defaults if available
+          const saved = localStorage.getItem('canvas_announcement_profile');
+          if (saved) {
+            try {
+              const parsed = JSON.parse(saved);
+              if (parsed.profile) profile.value = parsed.profile;
+              if (parsed.banner) banner.value = parsed.banner;
+              if (parsed.github) github.value = parsed.github;
+            } catch(e){}
+          }
+          // Load initial benchmark sample
+          loadBenchmarkPreset();
+          // Attempt fetching repo images automatically
+          fetchGitHubRepoImages();
+        });
+
+        return {
+          viewMode,
+          copied,
+          loadingImages,
+          github,
+          rawBaseUrl,
+          repoImages,
+          fetchGitHubRepoImages,
+          selectGitHubBanner,
+          palettes,
+          banner,
+          profile,
+          sections,
+          loadBenchmarkPreset,
+          addSection,
+          addDueGroup,
+          removeSection,
+          moveSection,
+          parseVideoEmbed,
+          getSectionTypeName,
+          generatedHTML,
+          saveDefaults,
+          copyCanvasHTML,
+          exportHTMLFile
+        };
+      }
+    }).mount('#app');
+  </script>
+</body>
+</html>
