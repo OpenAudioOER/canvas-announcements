@@ -60,77 +60,49 @@
       <!-- LEFT COLUMN: CONTROLS & FORM EDITORS -->
       <aside class="w-1/2 flex flex-col border-r border-slate-200 bg-white overflow-y-auto p-6 space-y-6">
 
-        <!-- GITHUB REPOSITORY & BANNER PICKER INTEGRATION -->
-        <section class="bg-slate-900 text-white rounded-xl p-4 space-y-4 shadow-sm">
+        <!-- QUICK BANNER SELECTION SECTION -->
+        <section class="bg-blue-50/70 border border-blue-200 rounded-xl p-4 space-y-3">
           <div class="flex items-center justify-between">
-            <h2 class="text-sm font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2">
-              <i class="fa-brands fa-github text-blue-400 text-base"></i> GitHub Asset Integration
+            <h2 class="text-sm font-bold text-blue-900 uppercase tracking-wider flex items-center gap-2">
+              <i class="fa-solid fa-image text-blue-600"></i> Select Announcement Banner
             </h2>
-            <span class="text-[10px] bg-blue-950 text-blue-300 px-2 py-0.5 rounded border border-blue-800 font-mono">OpenAudioOER</span>
+            <span class="text-[11px] font-semibold text-blue-700">OpenAudioOER Assets</span>
           </div>
 
-          <div class="grid grid-cols-3 gap-3 text-xs">
-            <div>
-              <label class="block text-[11px] text-slate-400 mb-1">GitHub Owner</label>
-              <input type="text" v-model="github.owner" class="w-full p-2 bg-slate-800 border border-slate-700 rounded text-slate-100 font-mono" />
-            </div>
-            <div>
-              <label class="block text-[11px] text-slate-400 mb-1">Repository Name</label>
-              <input type="text" v-model="github.repo" class="w-full p-2 bg-slate-800 border border-slate-700 rounded text-slate-100 font-mono" />
-            </div>
-            <div>
-              <label class="block text-[11px] text-slate-400 mb-1">Branch</label>
-              <input type="text" v-model="github.branch" class="w-full p-2 bg-slate-800 border border-slate-700 rounded text-slate-100 font-mono" />
-            </div>
-          </div>
-
-          <!-- OPTIONAL TOKEN FOR PRIVATE REPOS -->
-          <div>
-            <div class="flex items-center justify-between mb-1">
-              <label class="text-[11px] text-slate-400">GitHub Personal Access Token (Optional for Private Repos)</label>
-              <button @click="fetchGitHubRepoImages" class="text-[11px] text-blue-400 hover:underline flex items-center gap-1">
-                <i class="fa-solid fa-arrows-rotate" :class="loadingImages ? 'animate-spin' : ''"></i> Fetch Assets
-              </button>
-            </div>
-            <input type="password" v-model="github.token" placeholder="ghp_..." class="w-full text-xs p-2 bg-slate-800 border border-slate-700 rounded text-slate-100 font-mono" />
-          </div>
-
-          <!-- GITHUB ASSET THUMBNAIL PICKER -->
-          <div v-if="repoImages.length > 0" class="space-y-2 pt-1 border-t border-slate-800">
-            <label class="block text-[11px] text-slate-400 font-semibold">Select Banner Image from {{ github.repo }}:</label>
-            <div class="grid grid-cols-3 gap-2 max-h-36 overflow-y-auto p-1 bg-slate-950 rounded border border-slate-800">
-              <div v-for="img in repoImages" :key="img.path" @click="selectGitHubBanner(img)" 
-                :class="banner.url === img.rawUrl ? 'ring-2 ring-blue-500 bg-blue-900/30' : 'hover:bg-slate-800'"
-                class="p-1.5 rounded cursor-pointer transition border border-slate-800 flex flex-col items-center text-center group">
-                <img :src="img.rawUrl" :alt="img.name" class="h-12 w-full object-cover rounded mb-1" />
-                <span class="text-[10px] text-slate-300 font-mono truncate w-full group-hover:text-blue-300">{{ img.name }}</span>
+          <!-- 4 QUICK BANNER BUTTON CARDS WITH THUMBNAILS -->
+          <div class="grid grid-cols-2 gap-2.5">
+            <button v-for="b in presetBanners" :key="b.file" 
+              @click="setBannerPreset(b)"
+              :class="banner.url === b.url ? 'ring-2 ring-blue-600 bg-white shadow-md border-blue-400' : 'bg-white/80 hover:bg-white border-slate-200 hover:border-blue-300'"
+              class="p-2.5 rounded-lg border text-left transition flex items-center gap-3 group">
+              <img :src="b.url" :alt="b.name" class="w-16 h-10 object-cover rounded border border-slate-200 shrink-0" />
+              <div class="overflow-hidden">
+                <div class="text-xs font-bold text-slate-800 group-hover:text-blue-600 truncate">{{ b.icon }} {{ b.name }}</div>
+                <div class="text-[10px] text-slate-400 font-mono truncate">{{ b.file }}</div>
               </div>
-            </div>
+            </button>
           </div>
 
-          <div v-else class="text-[11px] text-slate-400 bg-slate-800/50 p-2.5 rounded border border-slate-800 flex items-center justify-between">
-            <span>Raw Asset Base URL: <code class="text-blue-300 font-mono text-[10px]">{{ rawBaseUrl }}</code></span>
-            <button @click="fetchGitHubRepoImages" class="text-blue-400 hover:text-blue-300 font-semibold text-[11px]">Load Repo Images</button>
+          <!-- CUSTOM URL FALLBACK / ALT TEXT -->
+          <div class="pt-2 border-t border-blue-200/60 grid grid-cols-3 gap-3">
+            <div class="col-span-2">
+              <label class="block text-[11px] font-semibold text-slate-600 mb-1">Active Banner URL</label>
+              <input type="text" v-model="banner.url" class="w-full text-xs p-2 border border-slate-300 rounded bg-white font-mono" />
+            </div>
+            <div>
+              <label class="block text-[11px] font-semibold text-slate-600 mb-1">Banner Alt Text</label>
+              <input type="text" v-model="banner.alt" class="w-full text-xs p-2 border border-slate-300 rounded bg-white" />
+            </div>
           </div>
         </section>
 
-        <!-- GLOBAL PROFILE & BANNER CONFIG -->
+        <!-- GLOBAL PROFILE & HARDCODED SIGNATURE CONFIG -->
         <section class="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-4">
           <h2 class="text-sm font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
-            <i class="fa-solid fa-image text-blue-600"></i> Announcement Banner & Profile
+            <i class="fa-solid fa-user-pen text-blue-600"></i> Instructor Profile & Signature
           </h2>
 
           <div class="grid grid-cols-2 gap-4">
-            <div class="col-span-2">
-              <label class="block text-xs font-semibold text-slate-600 mb-1">Active Banner Image URL</label>
-              <input type="text" v-model="banner.url" placeholder="https://raw.githubusercontent.com/OpenAudioOER/canvas-announcements/main/banners/week1.png" 
-                class="w-full text-xs p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono" />
-            </div>
-            <div>
-              <label class="block text-xs font-semibold text-slate-600 mb-1">Banner Alt Text</label>
-              <input type="text" v-model="banner.alt" placeholder="Course Banner Image" 
-                class="w-full text-xs p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" />
-            </div>
             <div>
               <label class="block text-xs font-semibold text-slate-600 mb-1">Instructor Name</label>
               <input type="text" v-model="profile.name" placeholder="Brian Barrick" 
@@ -141,15 +113,24 @@
               <input type="text" v-model="profile.department" placeholder="Political Science Department" 
                 class="w-full text-xs p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" />
             </div>
-            <div>
+            <div class="col-span-2">
               <label class="block text-xs font-semibold text-slate-600 mb-1">College / Institution</label>
               <input type="text" v-model="profile.college" placeholder="Los Angeles Harbor College" 
                 class="w-full text-xs p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" />
             </div>
-            <div class="col-span-2">
-              <label class="block text-xs font-semibold text-slate-600 mb-1">Signature Image URL (Optional)</label>
-              <input type="text" v-model="profile.signatureUrl" placeholder="https://ilearn.instructure.com/courses/.../signature.png" 
-                class="w-full text-xs p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono" />
+
+            <!-- HARDCODED GITHUB SIGNATURE INFO -->
+            <div class="col-span-2 bg-white p-3 rounded-lg border border-slate-200 flex items-center justify-between">
+              <div class="flex items-center space-x-3">
+                <img :src="profile.signatureUrl" alt="Signature Preview" class="h-10 border border-slate-200 rounded px-1 bg-slate-50" />
+                <div>
+                  <div class="text-xs font-bold text-slate-700">Signature Image Locked to GitHub Path</div>
+                  <div class="text-[10px] text-slate-400 font-mono">OpenAudioOER/canvas-announcements/main/banners/Signature.png</div>
+                </div>
+              </div>
+              <span class="text-xs text-emerald-600 font-bold flex items-center gap-1">
+                <i class="fa-solid fa-circle-check"></i> Linked
+              </span>
             </div>
           </div>
         </section>
@@ -392,56 +373,32 @@
       setup() {
         const viewMode = ref('preview');
         const copied = ref(false);
-        const loadingImages = ref(false);
 
-        // GitHub Repository Configuration
-        const github = ref({
-          owner: 'OpenAudioOER',
-          repo: 'canvas-announcements',
-          branch: 'main',
-          token: ''
+        // HARDCODED GITHUB BANNERS & SIGNATURE PATHS
+        const GITHUB_RAW_BASE = 'https://raw.githubusercontent.com/OpenAudioOER/canvas-announcements/main/banners/';
+        
+        const presetBanners = [
+          { name: 'Welcome Banner', icon: '👋', file: 'Welcome.png', url: GITHUB_RAW_BASE + 'Welcome.png' },
+          { name: 'Updates Banner', icon: '📢', file: 'Updates.png', url: GITHUB_RAW_BASE + 'Updates.png' },
+          { name: 'Important Banner', icon: '❗', file: 'Important.png', url: GITHUB_RAW_BASE + 'Important.png' },
+          { name: 'Reminder Banner', icon: '⏰', file: 'Reminder.png', url: GITHUB_RAW_BASE + 'Reminder.png' }
+        ];
+
+        const banner = ref({
+          url: GITHUB_RAW_BASE + 'Welcome.png',
+          alt: 'Welcome Banner'
         });
 
-        const repoImages = ref([]);
-
-        const rawBaseUrl = computed(() => {
-          return `https://raw.githubusercontent.com/${github.value.owner}/${github.value.repo}/${github.value.branch}/`;
+        const profile = ref({
+          name: 'Brian Barrick',
+          department: 'Political Science Department',
+          college: 'Los Angeles Harbor College',
+          signatureUrl: GITHUB_RAW_BASE + 'Signature.png'
         });
 
-        // Fetch images from OpenAudioOER/canvas-announcements repository via GitHub API
-        const fetchGitHubRepoImages = async () => {
-          loadingImages.value = true;
-          repoImages.value = [];
-          try {
-            const url = `https://api.github.com/repos/${github.value.owner}/${github.value.repo}/git/trees/${github.value.branch}?recursive=1`;
-            const headers = {};
-            if (github.value.token) {
-              headers['Authorization'] = `token ${github.value.token}`;
-            }
-            const res = await fetch(url, { headers });
-            if (res.ok) {
-              const data = await res.json();
-              const imageExts = ['.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp'];
-              repoImages.value = (data.tree || [])
-                .filter(file => file.type === 'blob' && imageExts.some(ext => file.path.toLowerCase().endsWith(ext)))
-                .map(file => ({
-                  name: file.path.split('/').pop(),
-                  path: file.path,
-                  rawUrl: `https://raw.githubusercontent.com/${github.value.owner}/${github.value.repo}/${github.value.branch}/${file.path}`
-                }));
-            } else {
-              console.warn('GitHub API returned status:', res.status);
-            }
-          } catch(e) {
-            console.error('Failed to fetch GitHub repo images:', e);
-          } finally {
-            loadingImages.value = false;
-          }
-        };
-
-        const selectGitHubBanner = (img) => {
-          banner.value.url = img.rawUrl;
-          banner.value.alt = img.name.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " ");
+        const setBannerPreset = (b) => {
+          banner.value.url = b.url;
+          banner.value.alt = b.name;
         };
 
         // Color Palettes Mapping
@@ -454,23 +411,11 @@
           slate: { name: 'Neutral Slate', border: '#64748b', bg: '#f8fafc', title: '#1e293b', buttonBg: '#475569' }
         };
 
-        const banner = ref({
-          url: 'https://raw.githubusercontent.com/OpenAudioOER/canvas-announcements/main/banners/welcome.png',
-          alt: 'Course Banner'
-        });
-
-        const profile = ref({
-          name: 'Brian Barrick',
-          department: 'Political Science Department',
-          college: 'Los Angeles Harbor College',
-          signatureUrl: 'https://ilearn.instructure.com/courses/379774/files/81532404/preview'
-        });
-
         const sections = ref([]);
 
         // BENCHMARK PRESET LOADER
         const loadBenchmarkPreset = () => {
-          banner.value.url = 'https://ilearn.instructure.com/courses/379774/files/81532458/preview';
+          banner.value.url = GITHUB_RAW_BASE + 'Welcome.png';
           banner.value.alt = 'Welcome Banner';
 
           sections.value = [
@@ -702,7 +647,7 @@
             }
           });
 
-          // 3. SIGNATURE BLOCK
+          // 3. SIGNATURE BLOCK (Hardcoded to Signature.png)
           html += `<p style="margin-top: 32px; margin-bottom: 8px;">Sincerely,</p>\n`;
           if (profile.value.signatureUrl) {
             html += `<p style="margin-bottom: 8px;"><img role="presentation" src="${profile.value.signatureUrl}" alt="${profile.value.name}" width="152" height="72" style="display: block;" /></p>\n`;
@@ -719,10 +664,9 @@
         const saveDefaults = () => {
           localStorage.setItem('canvas_announcement_profile', JSON.stringify({
             profile: profile.value,
-            banner: banner.value,
-            github: github.value
+            banner: banner.value
           }));
-          alert('Profile & GitHub settings saved to browser storage!');
+          alert('Profile defaults saved to browser storage!');
         };
 
         const copyCanvasHTML = () => {
@@ -748,24 +692,19 @@
               const parsed = JSON.parse(saved);
               if (parsed.profile) profile.value = parsed.profile;
               if (parsed.banner) banner.value = parsed.banner;
-              if (parsed.github) github.value = parsed.github;
             } catch(e){}
           }
+          // Ensure Signature is locked to GitHub raw path
+          profile.value.signatureUrl = GITHUB_RAW_BASE + 'Signature.png';
           // Load initial benchmark sample
           loadBenchmarkPreset();
-          // Attempt fetching repo images automatically
-          fetchGitHubRepoImages();
         });
 
         return {
           viewMode,
           copied,
-          loadingImages,
-          github,
-          rawBaseUrl,
-          repoImages,
-          fetchGitHubRepoImages,
-          selectGitHubBanner,
+          presetBanners,
+          setBannerPreset,
           palettes,
           banner,
           profile,
