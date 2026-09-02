@@ -297,7 +297,7 @@
                 </div>
               </template>
 
-              <!-- SIMPLIFIED YOUTUBE LINK VIDEO EMBED FORM -->
+              <!-- ERROR-153 PROOF YOUTUBE EMBED FORM -->
               <template v-else-if="sec.type === 'video'">
                 <div class="space-y-3">
                   <div>
@@ -305,17 +305,17 @@
                     <input type="text" v-model="sec.title" placeholder="🎥 Week 1 Lecture Video" class="w-full text-xs p-2 border border-slate-200 rounded font-semibold" />
                   </div>
                   <div>
-                    <label class="block text-[11px] font-semibold text-slate-500 mb-1">YouTube Video Link</label>
+                    <label class="block text-[11px] font-semibold text-slate-500 mb-1">YouTube Video Link or Video ID</label>
                     <input 
                       type="text" 
                       v-model="sec.youtubeInput" 
                       @input="parseYouTubeUrl(sec)" 
-                      placeholder="Paste YouTube Link (e.g. https://www.youtube.com/watch?v=... or https://youtu.be/...)" 
+                      placeholder="https://www.youtube.com/watch?v=... or https://youtu.be/..." 
                       class="w-full text-xs p-2.5 border border-slate-300 rounded font-mono focus:ring-2 focus:ring-purple-500 focus:outline-none" 
                     />
-                    <div v-if="sec.parsedUrl" class="text-[10px] text-purple-700 bg-purple-50 p-2 rounded mt-1.5 border border-purple-100 flex items-center justify-between font-mono">
-                      <span>Canvas 16:9 Embed URL: <strong>{{ sec.parsedUrl }}</strong></span>
-                      <i class="fa-solid fa-circle-check text-emerald-600 text-xs"></i>
+                    <div v-if="sec.parsedUrl" class="text-[10px] text-purple-800 bg-purple-50 p-2 rounded mt-1.5 border border-purple-100 flex items-center justify-between font-mono">
+                      <span>YouTube NoCookie Domain (Bypasses Error 153): <strong>{{ sec.parsedUrl }}</strong></span>
+                      <i class="fa-solid fa-shield-halved text-emerald-600 text-xs"></i>
                     </div>
                   </div>
                 </div>
@@ -555,22 +555,33 @@
           sec.body = text.substring(0, start) + formatted + text.substring(end);
         };
 
-        // AUTOMATIC YOUTUBE URL PARSER (Extracts Video ID & Converts to Embed URL)
+        // AUTOMATIC YOUTUBE URL PARSER (Extracts Video ID & Converts to Embed & Watch URLs)
         const parseYouTubeUrl = (sec) => {
           if (!sec.youtubeInput) {
             sec.parsedUrl = '';
+            sec.videoId = '';
             return;
           }
           const input = sec.youtubeInput.trim();
           const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|shorts\/|watch\?v=|\&v=)([^#\&\?]*).*/;
           const match = input.match(regExp);
 
+          let vId = '';
           if (match && match[2].length === 11) {
-            sec.parsedUrl = `https://www.youtube.com/embed/${match[2]}`;
+            vId = match[2];
           } else if (input.length === 11) {
-            sec.parsedUrl = `https://www.youtube.com/embed/${input}`;
+            vId = input;
+          }
+
+          if (vId) {
+            sec.videoId = vId;
+            // Use youtube-nocookie.com to bypass Error 153 and cookie restrictions
+            sec.parsedUrl = `https://www.youtube-nocookie.com/embed/${vId}?rel=0`;
+            sec.watchUrl = `https://www.youtube.com/watch?v=${vId}`;
           } else {
+            sec.videoId = '';
             sec.parsedUrl = input;
+            sec.watchUrl = input;
           }
         };
 
@@ -698,7 +709,9 @@
               type: 'video',
               title: '🎥 Video Lecture',
               youtubeInput: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-              parsedUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ'
+              videoId: 'dQw4w9WgXcQ',
+              parsedUrl: 'https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?rel=0',
+              watchUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'
             });
           } else if (type === 'duedates') {
             sections.value.push({
@@ -780,14 +793,21 @@
               html += `</div>\n`;
             } 
             else if (sec.type === 'video') {
-              const embedUrl = sec.parsedUrl || 'https://www.youtube.com/embed/dQw4w9WgXcQ';
+              const embedUrl = sec.parsedUrl || 'https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?rel=0';
+              const watchUrl = sec.watchUrl || 'https://www.youtube.com/watch?v=dQw4w9WgXcQ';
+              
               html += `<div style="margin-bottom: 24px;">\n`;
               if (sec.title) {
                 html += `  <h3 style="margin-top: 0; color: #1565c0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">${sec.title}</h3>\n`;
               }
+              // 16:9 Aspect Ratio Wrapper with strict-origin-when-cross-origin referrerpolicy
               html += `  <div style="position: relative; width: 100%; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 8px; background-color: #000000;">\n`;
-              html += `    <iframe src="${embedUrl}" title="${sec.title || 'YouTube Video'}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; border-radius: 8px;" allowfullscreen="true" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>\n`;
+              html += `    <iframe src="${embedUrl}" title="${sec.title || 'YouTube Video'}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; border-radius: 8px;" allowfullscreen="true" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin"></iframe>\n`;
               html += `  </div>\n`;
+              // Fallback Watch Button below Video Player
+              html += `  <p style="margin-top: 8px; margin-bottom: 0;">\n`;
+              html += `    <a href="${watchUrl}" target="_blank" style="display: inline-block; background-color: #f0f4f8; color: #1976d2; border: 1px solid #1976d2; padding: 6px 12px; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 13px; font-family: sans-serif;">📺 Open in YouTube</a>\n`;
+              html += `  </p>\n`;
               html += `</div>\n`;
             }
             else if (sec.type === 'duedates') {
