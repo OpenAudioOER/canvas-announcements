@@ -43,8 +43,11 @@
         </div>
       </div>
       <div class="flex items-center space-x-2">
+        <button @click="clearAllSections" class="text-xs bg-rose-950/80 hover:bg-rose-900 text-rose-200 px-3 py-2 rounded-md transition border border-rose-800/80 flex items-center gap-1.5" title="Clear all sections to start from scratch">
+          <i class="fa-solid fa-eraser"></i> Clear All (Blank)
+        </button>
         <button @click="loadBenchmarkPreset" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-2 rounded-md transition border border-slate-700 flex items-center gap-1.5" title="Reset all sections to benchmark default sample">
-          <i class="fa-solid fa-rotate-left"></i> Reset to Sample
+          <i class="fa-solid fa-rotate-left"></i> Load Sample
         </button>
         <button @click="exportHTMLFile" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-2 rounded-md transition border border-slate-700 flex items-center gap-1.5">
           <i class="fa-solid fa-file-arrow-down"></i> Export .html
@@ -173,6 +176,15 @@
                 + Task / Due Dates Box
               </button>
             </div>
+          </div>
+
+          <!-- EMPTY STATE NOTICE IF ALL SECTIONS CLEARED -->
+          <div v-if="sections.length === 0" class="bg-slate-50 border-2 border-dashed border-slate-200 rounded-xl p-8 text-center space-y-3">
+            <div class="w-12 h-12 bg-slate-200 text-slate-500 rounded-full flex items-center justify-center mx-auto text-lg">
+              <i class="fa-solid fa-square-plus"></i>
+            </div>
+            <h3 class="text-sm font-bold text-slate-700">Blank Canvas Ready</h3>
+            <p class="text-xs text-slate-500 max-w-sm mx-auto">Click any of the buttons above (<strong>+ Card Segment</strong>, <strong>+ Video Embed</strong>, or <strong>+ Task / Due Dates Box</strong>) to build your announcement section-by-section!</p>
           </div>
 
           <div class="space-y-4">
@@ -484,6 +496,13 @@
           slate: { name: 'Neutral Slate', border: '#64748b', bg: '#f8fafc', title: '#1e293b', buttonBg: '#475569' }
         };
 
+        // CLEAR ALL SECTIONS FOR A BLANK CANVAS
+        const clearAllSections = () => {
+          if (confirm('Are you sure you want to clear all announcement segments and start fresh?')) {
+            sections.value = [];
+          }
+        };
+
         // BENCHMARK PRESET LOADER
         const loadBenchmarkPreset = () => {
           activeBannerFile.value = 'Welcome.png';
@@ -781,7 +800,7 @@
           if (savedState) {
             try {
               const parsed = JSON.parse(savedState);
-              if (parsed.sections && Array.isArray(parsed.sections) && parsed.sections.length > 0) {
+              if (parsed.sections && Array.isArray(parsed.sections)) {
                 sections.value = parsed.sections;
               } else {
                 loadBenchmarkPreset();
@@ -811,6 +830,7 @@
           banner,
           profile,
           sections,
+          clearAllSections,
           loadBenchmarkPreset,
           addSection,
           addDueGroup,
