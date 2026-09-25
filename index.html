@@ -52,6 +52,9 @@
         <button @click="exportHTMLFile" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-2 rounded-md transition border border-slate-700 flex items-center gap-1.5">
           <i class="fa-solid fa-file-arrow-down"></i> Export .html
         </button>
+        <button @click="isSettingsOpen = true" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-2 rounded-md transition border border-slate-700 flex items-center gap-1.5" title="Settings & Defaults (Hosting source, Instructor profile)">
+          <i class="fa-solid fa-gear"></i> Settings
+        </button>
         <button @click="copyCanvasHTML" class="bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold px-4 py-2 rounded-md shadow-sm transition flex items-center gap-2">
           <i class="fa-solid" :class="copied ? 'fa-check' : 'fa-copy'"></i>
           <span>{{ copied ? 'Copied to Clipboard!' : 'Copy Canvas HTML' }}</span>
@@ -65,32 +68,16 @@
       <!-- LEFT COLUMN: CONTROLS & FORM EDITORS -->
       <aside class="w-1/2 flex flex-col border-r border-slate-200 bg-white overflow-y-auto p-6 space-y-6">
 
-        <!-- ASSET DOMAIN / SOURCE SELECTOR -->
-        <section class="bg-slate-900 text-white rounded-xl p-4 space-y-3">
-          <div class="flex items-center justify-between">
-            <h2 class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
-              <i class="fa-solid fa-globe text-blue-400"></i> Image Asset Hosting Source
-            </h2>
-            <span class="text-[10px] bg-emerald-950 text-emerald-300 px-2 py-0.5 rounded border border-emerald-800 font-semibold">GitHub Raw Default</span>
-          </div>
-
-          <div class="space-y-2">
-            <label class="block text-[11px] text-slate-400">Where are your banner images hosted for Canvas?</label>
-            <select v-model="assetSource" @change="updateAssetBaseUrl" class="w-full text-xs p-2 bg-slate-800 border border-slate-700 rounded text-slate-100 font-semibold focus:outline-none">
-              <option value="github_raw">GitHub Raw (https://raw.githubusercontent.com/OpenAudioOER/canvas-announcements/main/banners/)</option>
-              <option value="github_pages">GitHub Pages (https://openaudiooer.github.io/canvas-announcements/banners/)</option>
-              <option value="relative">Local Relative Folder (banners/)</option>
-            </select>
-          </div>
-        </section>
-
         <!-- QUICK BANNER SELECTION SECTION (CLEAN TEXT BUTTONS WITHOUT THUMBNAILS) -->
         <section class="bg-blue-50/70 border border-blue-200 rounded-xl p-4 space-y-3">
           <div class="flex items-center justify-between">
             <h2 class="text-sm font-bold text-blue-900 uppercase tracking-wider flex items-center gap-2">
               <i class="fa-solid fa-image text-blue-600"></i> Select Announcement Banner
             </h2>
-            <span class="text-[11px] font-semibold text-blue-700">OpenAudioOER Assets</span>
+            <button @click="isSettingsOpen = true" class="text-[11px] font-semibold text-blue-700 hover:text-blue-900 flex items-center gap-1 bg-white/60 hover:bg-white px-2 py-0.5 rounded border border-blue-200 transition" title="Open Settings to change hosting source or defaults">
+              <span>GitHub Raw</span>
+              <i class="fa-solid fa-gear text-[10px]"></i>
+            </button>
           </div>
 
           <!-- 4 QUICK BANNER SELECTION BUTTONS -->
@@ -118,45 +105,6 @@
             <div>
               <label class="block text-[11px] font-semibold text-slate-600 mb-1">Banner Alt Text</label>
               <input type="text" v-model="banner.alt" class="w-full text-xs p-2 border border-slate-300 rounded bg-white" />
-            </div>
-          </div>
-        </section>
-
-        <!-- GLOBAL PROFILE & HARDCODED SIGNATURE CONFIG -->
-        <section class="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-4">
-          <h2 class="text-sm font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
-            <i class="fa-solid fa-user-pen text-blue-600"></i> Instructor Profile & Signature
-          </h2>
-
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <label class="block text-xs font-semibold text-slate-600 mb-1">Instructor Name</label>
-              <input type="text" v-model="profile.name" placeholder="Brian Barrick" 
-                class="w-full text-xs p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" />
-            </div>
-            <div>
-              <label class="block text-xs font-semibold text-slate-600 mb-1">Department</label>
-              <input type="text" v-model="profile.department" placeholder="Political Science Department" 
-                class="w-full text-xs p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" />
-            </div>
-            <div class="col-span-2">
-              <label class="block text-xs font-semibold text-slate-600 mb-1">College / Institution</label>
-              <input type="text" v-model="profile.college" placeholder="Los Angeles Harbor College" 
-                class="w-full text-xs p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" />
-            </div>
-
-            <!-- HARDCODED GITHUB SIGNATURE INFO -->
-            <div class="col-span-2 bg-white p-3 rounded-lg border border-slate-200 flex items-center justify-between">
-              <div class="flex items-center space-x-3">
-                <img src="banners/Signature.png" alt="Signature Preview" class="h-10 border border-slate-200 rounded px-1 bg-slate-50" />
-                <div>
-                  <div class="text-xs font-bold text-slate-700">Signature Image Asset</div>
-                  <div class="text-[10px] text-slate-400 font-mono">banners/Signature.png</div>
-                </div>
-              </div>
-              <span class="text-xs text-emerald-600 font-bold flex items-center gap-1">
-                <i class="fa-solid fa-circle-check"></i> Connected
-              </span>
             </div>
           </div>
         </section>
@@ -479,7 +427,143 @@
 
       </main>
 
+    <!-- SETTINGS SLIDE-OVER DRAWER -->
+    <div v-if="isSettingsOpen" class="fixed inset-0 z-50 overflow-hidden flex justify-end">
+      <!-- BACKDROP -->
+      <div 
+        @click="isSettingsOpen = false" 
+        class="fixed inset-0 bg-slate-950/60 backdrop-blur-xs transition-opacity"
+      ></div>
+
+      <!-- DRAWER CONTENT PANEL -->
+      <div class="relative w-full max-w-md bg-white h-full shadow-2xl z-10 flex flex-col border-l border-slate-200 overflow-hidden">
+        
+        <!-- DRAWER HEADER -->
+        <div class="px-6 py-4 bg-slate-900 text-white flex items-center justify-between border-b border-slate-800 shrink-0">
+          <div class="flex items-center space-x-2.5">
+            <div class="bg-blue-600/30 text-blue-400 p-1.5 rounded-lg border border-blue-500/30">
+              <i class="fa-solid fa-sliders text-sm"></i>
+            </div>
+            <div>
+              <h2 class="text-sm font-bold tracking-wide">Settings & Defaults</h2>
+              <p class="text-[11px] text-slate-400">Hosting and instructor configurations</p>
+            </div>
+          </div>
+          <button 
+            @click="isSettingsOpen = false" 
+            class="text-slate-400 hover:text-white p-1.5 rounded-md hover:bg-slate-800 transition"
+            title="Close Settings (Esc)"
+          >
+            <i class="fa-solid fa-xmark text-lg"></i>
+          </button>
+        </div>
+
+        <!-- DRAWER BODY -->
+        <div class="flex-1 overflow-y-auto p-6 space-y-6">
+
+          <!-- 1. ASSET HOSTING SOURCE -->
+          <section class="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
+            <div class="flex items-center justify-between">
+              <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                <i class="fa-solid fa-globe text-blue-600"></i> Image Asset Hosting Source
+              </h3>
+              <span class="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-semibold border border-emerald-200">GitHub Raw Default</span>
+            </div>
+            <p class="text-[11px] text-slate-500 leading-relaxed">
+              Where Canvas fetches banner and signature images. By default, raw GitHub CDN links are generated for direct compatibility with Canvas LMS.
+            </p>
+            <div class="space-y-1.5 pt-1">
+              <label class="block text-[11px] font-semibold text-slate-700">Hosting Location:</label>
+              <select v-model="assetSource" @change="updateAssetBaseUrl" class="w-full text-xs p-2.5 bg-white border border-slate-300 rounded-lg text-slate-800 font-semibold focus:ring-2 focus:ring-blue-500 focus:outline-none shadow-2xs">
+                <option value="github_raw">GitHub Raw (Default - raw.githubusercontent.com)</option>
+                <option value="github_pages">GitHub Pages (openaudiooer.github.io)</option>
+                <option value="relative">Local Relative Folder (banners/)</option>
+              </select>
+            </div>
+          </section>
+
+          <!-- 2. INSTRUCTOR PROFILE & SIGNATURE -->
+          <section class="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-4">
+            <div class="flex items-center justify-between">
+              <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                <i class="fa-solid fa-user-pen text-blue-600"></i> Instructor Profile & Signature
+              </h3>
+              <span class="text-[10px] bg-blue-100 text-blue-800 px-2 py-0.5 rounded font-medium border border-blue-200">Auto-saved</span>
+            </div>
+            <p class="text-[11px] text-slate-500 leading-relaxed">
+              These details are automatically placed at the footer of every announcement as your instructor sign-off block.
+            </p>
+
+            <div class="space-y-3 pt-1">
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Instructor Name</label>
+                <input type="text" v-model="profile.name" placeholder="Brian Barrick" 
+                  class="w-full text-xs p-2.5 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none font-medium shadow-2xs" />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Department</label>
+                <input type="text" v-model="profile.department" placeholder="Political Science Department" 
+                  class="w-full text-xs p-2.5 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none shadow-2xs" />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">College / Institution</label>
+                <input type="text" v-model="profile.college" placeholder="Los Angeles Harbor College" 
+                  class="w-full text-xs p-2.5 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none shadow-2xs" />
+              </div>
+
+              <!-- SIGNATURE IMAGE ASSET PREVIEW -->
+              <div class="bg-white p-3.5 rounded-lg border border-slate-200 flex items-center justify-between mt-2 shadow-2xs">
+                <div class="flex items-center space-x-3">
+                  <img src="banners/Signature.png" alt="Signature Preview" class="h-10 border border-slate-200 rounded px-1.5 py-0.5 bg-slate-50" />
+                  <div>
+                    <div class="text-xs font-bold text-slate-700">Signature Image Asset</div>
+                    <div class="text-[10px] text-slate-400 font-mono">banners/Signature.png</div>
+                  </div>
+                </div>
+                <span class="text-xs text-emerald-600 font-bold flex items-center gap-1">
+                  <i class="fa-solid fa-circle-check"></i> Connected
+                </span>
+              </div>
+            </div>
+          </section>
+
+          <!-- QUICK LINKS TO GITHUB REPOSITORY ASSETS -->
+          <section class="bg-blue-50/70 border border-blue-200 rounded-xl p-4 space-y-2.5">
+            <h4 class="text-xs font-bold text-blue-900 flex items-center gap-1.5 uppercase tracking-wider">
+              <i class="fa-solid fa-folder-open text-blue-600"></i> Hosted Media Folders
+            </h4>
+            <div class="text-xs space-y-2 text-slate-700">
+              <div class="flex items-center justify-between p-2 bg-white rounded border border-blue-100">
+                <span class="font-mono text-xs text-slate-800">📁 banners/</span>
+                <a href="https://github.com/OpenAudioOER/canvas-announcements/tree/main/banners" target="_blank" class="text-blue-600 hover:text-blue-800 font-semibold text-[11px] flex items-center gap-1">
+                  Browse Banners <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i>
+                </a>
+              </div>
+              <div class="flex items-center justify-between p-2 bg-white rounded border border-blue-100">
+                <span class="font-mono text-xs text-slate-800">📁 images/</span>
+                <a href="https://github.com/OpenAudioOER/canvas-announcements/tree/main/images" target="_blank" class="text-blue-600 hover:text-blue-800 font-semibold text-[11px] flex items-center gap-1">
+                  Browse Event Flyers <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i>
+                </a>
+              </div>
+            </div>
+          </section>
+
+        </div>
+
+        <!-- DRAWER FOOTER -->
+        <div class="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between shrink-0">
+          <span class="text-[11px] text-slate-500 font-medium">Changes save automatically</span>
+          <button 
+            @click="isSettingsOpen = false" 
+            class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-5 py-2 rounded-lg transition shadow-xs"
+          >
+            Done
+          </button>
+        </div>
+
+      </div>
     </div>
+
   </div>
 
   <script>
@@ -489,6 +573,7 @@
       setup() {
         const viewMode = ref('preview');
         const copied = ref(false);
+        const isSettingsOpen = ref(false);
         const assetSource = ref('github_raw');
 
         const isLocalFileProtocol = window.location.protocol === 'file:';
@@ -978,6 +1063,12 @@
         };
 
         onMounted(() => {
+          window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && isSettingsOpen.value) {
+              isSettingsOpen.value = false;
+            }
+          });
+
           const savedState = localStorage.getItem('canvas_announcement_state');
           if (savedState) {
             try {
@@ -1002,6 +1093,7 @@
         return {
           viewMode,
           copied,
+          isSettingsOpen,
           assetSource,
           activeBannerFile,
           presetBanners,
