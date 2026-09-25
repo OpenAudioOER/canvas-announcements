@@ -84,7 +84,7 @@
           </div>
         </section>
 
-        <!-- QUICK BANNER SELECTION SECTION -->
+        <!-- QUICK BANNER SELECTION SECTION (CLEAN TEXT BUTTONS WITHOUT THUMBNAILS) -->
         <section class="bg-blue-50/70 border border-blue-200 rounded-xl p-4 space-y-3">
           <div class="flex items-center justify-between">
             <h2 class="text-sm font-bold text-blue-900 uppercase tracking-wider flex items-center gap-2">
@@ -93,17 +93,19 @@
             <span class="text-[11px] font-semibold text-blue-700">OpenAudioOER Assets</span>
           </div>
 
-          <!-- 4 QUICK BANNER BUTTON CARDS WITH THUMBNAILS -->
+          <!-- 4 QUICK BANNER SELECTION BUTTONS -->
           <div class="grid grid-cols-2 gap-2.5">
             <button v-for="b in presetBanners" :key="b.file" 
               @click="setBannerPreset(b)"
               :class="activeBannerFile === b.file ? 'ring-2 ring-blue-600 bg-white shadow-md border-blue-400' : 'bg-white/80 hover:bg-white border-slate-200 hover:border-blue-300'"
-              class="p-2.5 rounded-lg border text-left transition flex items-center gap-3 group">
-              <img :src="'banners/' + b.file" :alt="b.name" class="w-16 h-10 object-cover rounded border border-slate-200 shrink-0" @error="handleImgError" />
-              <div class="overflow-hidden">
-                <div class="text-xs font-bold text-slate-800 group-hover:text-blue-600 truncate">{{ b.icon }} {{ b.name }}</div>
-                <div class="text-[10px] text-slate-400 font-mono truncate">{{ b.file }}</div>
+              class="p-3 rounded-lg border text-left transition flex items-center justify-between group">
+              <div>
+                <div class="text-xs font-bold text-slate-800 group-hover:text-blue-600 flex items-center gap-1.5">
+                  <span>{{ b.icon }}</span> {{ b.name }}
+                </div>
+                <div class="text-[10px] text-slate-400 font-mono mt-0.5">{{ b.file }}</div>
               </div>
+              <i class="fa-solid fa-check text-blue-600 text-xs" v-if="activeBannerFile === b.file"></i>
             </button>
           </div>
 
@@ -520,13 +522,6 @@
           banner.value.alt = b.name;
         };
 
-        const handleImgError = (e) => {
-          if (!e.target.src.includes('banners/')) {
-            const fileName = e.target.src.split('/').pop();
-            e.target.src = 'banners/' + fileName;
-          }
-        };
-
         // WYSIWYG FORMATTING HELPER FOR BODY TEXT
         const applyFormatting = (sec, action) => {
           const textarea = document.getElementById('textarea_' + sec.id);
@@ -810,7 +805,7 @@
               if (isForPreview && isLocalFileProtocol) {
                 html += `  <div style="position: relative; width: 100%; border-radius: 8px; overflow: hidden; border: 1px solid #e2e8f0; background-color: #0f172a;">\n`;
                 html += `    <a href="${watchUrl}" target="_blank" style="display: block; position: relative; text-decoration: none;">\n`;
-                html += `      <img src="${thumbUrl}" alt="Video Thumbnail" style="width: 100%; max-height: 380px; object-cover: cover; display: block; opacity: 0.85;" />\n`;
+                html += `      <img src="${thumbUrl}" alt="Video Thumbnail" style="width: 100%; max-height: 380px; object-fit: cover; display: block; opacity: 0.85;" />\n`;
                 html += `      <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: rgba(220, 38, 38, 0.9); color: white; width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; box-shadow: 0 4px 14px rgba(0,0,0,0.4);">▶</div>\n`;
                 html += `    </a>\n`;
                 html += `  </div>\n`;
@@ -943,7 +938,6 @@
           presetBanners,
           updateAssetBaseUrl,
           setBannerPreset,
-          handleImgError,
           applyFormatting,
           parseYouTubeUrl,
           palettes,

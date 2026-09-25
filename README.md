@@ -24,7 +24,8 @@ Hosted live at: **[OpenAudioOER Canvas Announcement Builder](https://openaudiooe
 ```
 ├── index.html        # Main Builder Web Application (GitHub Pages)
 ├── README.md         # Documentation & Usage Guide
-└── banners/          # Folder for course banner images (.png, .jpg, .svg)
+├── banners/          # Folder for course banner images (.png, .jpg, .svg)
+└── images/           # Folder for single-use announcement images & event flyers
 ```
 
 ---
