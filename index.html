@@ -251,9 +251,12 @@
                 </div>
 
                 <!-- BODY TEXT WITH WYSIWYG MINI TOOLBAR -->
-                <div class="space-y-1">
+                <div class="space-y-1.5">
                   <div class="flex items-center justify-between">
-                    <label class="block text-[11px] font-semibold text-slate-500">Body Text</label>
+                    <div class="flex items-center gap-1.5">
+                      <label class="block text-[11px] font-semibold text-slate-600">Body Text</label>
+                      <span class="text-[10px] text-slate-400 font-normal hidden sm:inline">(Enter = line break · 2× Enter = new paragraph)</span>
+                    </div>
                     <!-- WYSIWYG BUTTONS -->
                     <div class="flex items-center space-x-1 bg-slate-100 p-1 rounded border border-slate-200">
                       <button @click="applyFormatting(sec, 'bold')" class="text-xs px-2 py-0.5 hover:bg-white rounded text-slate-700 font-bold" title="Bold text">
@@ -271,13 +274,24 @@
                       <button @click="applyFormatting(sec, 'ul')" class="text-xs px-2 py-0.5 hover:bg-white rounded text-slate-700" title="Insert bullet list">
                         <i class="fa-solid fa-list-ul"></i>
                       </button>
+                      <div class="w-px h-3.5 bg-slate-300 mx-0.5"></div>
+                      <button @click="applyFormatting(sec, 'p')" class="text-xs px-2 py-0.5 hover:bg-white rounded text-slate-700 font-serif font-bold" title="Insert Paragraph Break (¶)">
+                        ¶
+                      </button>
+                      <button @click="applyFormatting(sec, 'br')" class="text-xs px-2 py-0.5 hover:bg-white rounded text-slate-700 font-mono text-[11px]" title="Insert Line Break (↵)">
+                        ↵
+                      </button>
+                      <button @click="applyFormatting(sec, 'img')" class="text-xs px-2 py-0.5 hover:bg-purple-100 rounded text-purple-700" title="Insert Flyer / Image">
+                        <i class="fa-solid fa-image"></i>
+                      </button>
                     </div>
                   </div>
                   <textarea 
                     :id="'textarea_' + sec.id" 
                     v-model="sec.body" 
-                    rows="3" 
-                    class="w-full text-xs p-2 border border-slate-200 rounded leading-relaxed focus:ring-2 focus:ring-blue-500 focus:outline-none font-sans"
+                    rows="5" 
+                    placeholder="Write your announcement content here...&#10;&#10;Press Enter for a line break, or press Enter twice to create a new paragraph."
+                    class="w-full text-xs p-2.5 border border-slate-200 rounded-lg leading-relaxed focus:ring-2 focus:ring-blue-500 focus:outline-none font-sans min-h-[90px]"
                   ></textarea>
                 </div>
 
@@ -529,29 +543,56 @@
           const start = textarea.selectionStart;
           const end = textarea.selectionEnd;
           const text = sec.body || '';
-          const selected = text.substring(start, end) || 'text';
+          const selected = text.substring(start, end);
 
           let formatted = '';
+          let newCursorPos = start;
+
           if (action === 'bold') {
-            formatted = `<strong>${selected}</strong>`;
+            formatted = `<strong>${selected || 'bold text'}</strong>`;
+            newCursorPos = start + formatted.length;
           } else if (action === 'italic') {
-            formatted = `<em>${selected}</em>`;
+            formatted = `<em>${selected || 'italic text'}</em>`;
+            newCursorPos = start + formatted.length;
           } else if (action === 'highlight') {
-            formatted = `<mark style="background-color: #fff59d; padding: 2px 4px; border-radius: 3px;">${selected}</mark>`;
+            formatted = `<mark style="background-color: #fff59d; padding: 2px 4px; border-radius: 3px;">${selected || 'highlighted text'}</mark>`;
+            newCursorPos = start + formatted.length;
           } else if (action === 'link') {
             const url = prompt('Enter hyperlink URL:', 'https://');
             if (url) {
-              formatted = `<a href="${url}" style="color: #1976d2; font-weight: bold; text-decoration: underline;">${selected}</a>`;
+              formatted = `<a href="${url}" style="color: #1976d2; font-weight: bold; text-decoration: underline;">${selected || 'link text'}</a>`;
+              newCursorPos = start + formatted.length;
             } else {
               return;
             }
           } else if (action === 'ul') {
-            const lines = selected.split('\n').filter(l => l.trim());
+            const lines = (selected || 'Item 1\nItem 2').split('\n').filter(l => l.trim());
             const items = lines.length > 0 ? lines.map(l => `  <li>${l.trim()}</li>`).join('\n') : '  <li>Item 1</li>';
-            formatted = `<ul style="margin-top: 8px; margin-bottom: 8px; padding-left: 20px;">\n${items}\n</ul>`;
+            formatted = `\n<ul style="margin-top: 8px; margin-bottom: 8px; padding-left: 20px;">\n${items}\n</ul>\n`;
+            newCursorPos = start + formatted.length;
+          } else if (action === 'p') {
+            formatted = '\n\n';
+            newCursorPos = start + formatted.length;
+          } else if (action === 'br') {
+            formatted = '\n';
+            newCursorPos = start + formatted.length;
+          } else if (action === 'img') {
+            const defaultUrl = 'https://raw.githubusercontent.com/OpenAudioOER/canvas-announcements/main/images/nanette-barragan-youth-conversation.png';
+            const imgUrl = prompt('Enter image URL (GitHub raw, GitHub pages, or web link):', defaultUrl);
+            if (imgUrl) {
+              const alt = prompt('Enter image description / alt text (for screen readers):', 'Announcement Flyer') || '';
+              formatted = `\n<p style="margin: 16px 0; text-align: center;"><img src="${imgUrl}" alt="${alt}" style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" /></p>\n`;
+              newCursorPos = start + formatted.length;
+            } else {
+              return;
+            }
           }
 
           sec.body = text.substring(0, start) + formatted + text.substring(end);
+          setTimeout(() => {
+            textarea.focus();
+            textarea.setSelectionRange(newCursorPos, newCursorPos);
+          }, 0);
         };
 
         // AUTOMATIC YOUTUBE URL PARSER
@@ -759,6 +800,34 @@
           return type;
         };
 
+        // HELPER TO CONVERT MULTI-LINE BODY TEXT INTO CANVAS-COMPLIANT HTML PARAGRAPHS & LINE BREAKS
+        const formatBodyContent = (bodyText, hasButton) => {
+          if (!bodyText || !bodyText.trim()) return '';
+
+          // Normalize Windows (\r\n) and Mac (\r) line endings to \n
+          const text = bodyText.replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim();
+
+          // Split into paragraph blocks separated by 2 or more consecutive newlines (blank lines)
+          const paragraphs = text.split(/\n\s*\n/);
+
+          return paragraphs.map((para, index) => {
+            const trimmed = para.trim();
+            if (!trimmed) return '';
+            const isLast = (index === paragraphs.length - 1);
+            const marginBottom = (isLast && !hasButton) ? '0' : '14px';
+
+            // If the block is already an HTML block element (e.g. <ul>, <ol>, <p>, <div>, <blockquote>, <figure>, <table>, <h1-6>)
+            if (/^<(p|ul|ol|div|blockquote|figure|table|h[1-6])[\s>]/i.test(trimmed)) {
+              return `  ${trimmed}\n`;
+            }
+
+            // Convert internal single line breaks into Canvas-safe <br /> tags
+            const withLineBreaks = trimmed.split('\n').join('<br />\n  ');
+
+            return `  <p style="margin-top: 0; margin-bottom: ${marginBottom}; color: #2c3e50; line-height: 1.6;">${withLineBreaks}</p>\n`;
+          }).filter(Boolean).join('');
+        };
+
         // HELPER TO RENDER HTML (for Canvas Output and Live Preview)
         const renderHTML = (isForPreview = false) => {
           let html = '';
@@ -782,7 +851,7 @@
 
               html += `<div style="${bgStyle}${borderStyle}${radiusStyle}padding: 18px; margin-bottom: 24px;">\n`;
               html += `  <h3 style="margin-top: 0; color: ${pal.title}; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">${sec.emoji ? sec.emoji + ' ' : ''}${sec.title}</h3>\n`;
-              html += `  <p style="margin-bottom: ${sec.hasButton ? '12px' : '0'}; color: #2c3e50; line-height: 1.6;">${sec.body}</p>\n`;
+              html += formatBodyContent(sec.body, sec.hasButton);
 
               if (sec.hasButton && sec.buttonText) {
                 html += `  <p style="margin-bottom: 0;"><a title="${sec.buttonText}" href="${sec.buttonUrl || '#'}" style="display: inline-block; background-color: ${pal.buttonBg}; color: #ffffff; padding: 10px 18px; text-decoration: none; border-radius: 6px; font-weight: bold; font-family: sans-serif;">${sec.buttonText}</a></p>\n`;
